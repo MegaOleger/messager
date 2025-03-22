@@ -1,2 +1,5 @@
-.vscode/ #vscode
-*.db #all local .db files
+#vscode
+.vscode/
+
+#all local .db files
+*.db 
