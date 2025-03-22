@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Taynopis</title>
+    <link rel="stylesheet" href="../static/styles/style_log.css" type="text/css">
+    <link rel="icon" href="..\static\images\icons\logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="boxes">
+        <div class="box_1">
+            <img style="width: 50%; margin-left: 25%; margin-top: 15%;" src="../static/images/icons\logo.png">
+            <p style="font-size: 250%; text-align: center;">Taynopis</p>
+        </div>
+        <div class="box_2_reg">
+            <form action="/registration" method="post" name="reg"> 
+            <div style="display: inline-flex;">
+                <div>
+                    <p class="txt_box">Name</p>
+                    <input type="text" class="input_reg" name="reg_name" maxlength="15" required>
+                    <p class="txt_box">Surname</p>
+                    <input type="text" class="input_reg" name="reg_lastname" maxlength="15" required>
+                </div>
+                <div style="margin-left: 5px;">
+                    <p class="txt_box">Login</p>
+                    <input type="text" class="input_reg {% if error_reg %}error{% endif %}" name="reg_login" minlength="4" required>
+                    <p class="txt_box">Password</p>
+                    <input type="text" class="input_reg" name="reg_password" minlength="5" required>
+                </div>
+            </div>
+
+            <div style="margin-top: 5%; text-align: center;" >
+                <lebel style="user-select: none;">Choose your date of birth:</lebel>
+                <input class="date" type="date" id="bday" name="bday" maxlength="4" value="{{ input_bday }}" required>
+            </div>
+            <div style="margin-top: 5%;">
+                <button class="btn_reg" type="submit">Sign up</button>
+                <div class="message"><p>{{ message_login }}</p></div>
+                <button class="log" type="button" onclick="document.location='/login'">Login</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

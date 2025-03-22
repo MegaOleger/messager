@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en-ru">
+<head>
+    <link rel="stylesheet" type="text/css" href="../static/styles/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="..\static\images\icons\logo.png" type="image/x-icon">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <title>Taynopis</title>
+</head>
+
+<body>
+    <div class="main-window">       
+        <div class="chat-list">
+
+            <div class="chat-list-header">
+                <button onclick="display_side_panel()" class="chat-list-header-button_more" id="btn_panel"><img class="img_three-line" src="..\static\images\icons\three-line.svg"></button>
+                <div class="chat-list-header-blockmore" id="panel">
+                    <button onclick="document.location='/settings'" class="chat-list-header-blockmore-btn" type="submit"><img class="chat-list-header-blockmore-img_inbtn" id="setting" src="..\static\images\icons\setting.svg"><p class="chat-list-header-blockmore-txt_inbtn">Setting</p></button>
+                    <p class="chat-list-header-blockmore-txt">Version: {vers}</p>
+                </div>
+                <input class="chat-list-header-search" rows="1" placeholder="Search"></input>
+            </div>
+            
+            <div>
+                <div id="chat_list" class="chat-list-body"></div>
+
+                <div class="body-plus_panel">
+                    <button onclick="display_side_plus_panel()" class="plus_panel-btn_plus" id="btn_plus_panel"><img class="btn_plus-img_plus" src="..\static\images\icons\plus.svg"></button>
+                    <div class="plus_panel-block" id="plus_panel">
+                        <button onclick="display_side_create_chat()" class="block-btn_element" id="btn_panel_create_chat"><img  src="..\static\images\icons\create_chat.svg" class="btn_element-img"><p class="btn_element-txt">Create chat</p></button>
+                        <button onclick="display_side_join_panel()" class="block-btn_element" id="btn_panel_join_group"><img  src="..\static\images\icons\join_group.svg" class="btn_element-img"><p class="btn_element-txt">Join to group</p></button>
+                        <button onclick="display_side_create_panel()" class="block-btn_element" id="btn_panel_create_group"><img src="..\static\images\icons\group.svg" style="width: 27px" class="btn_element-img"><p class="btn_element-txt">Create group</p></button>
+                    </div>
+                    <div class="body-panel_create_chat" id="panel_create_chat">
+                        <form action="/create_chat" method="post" name="form_create_chat" class="panel-form">
+                            <p class="panel_name">Create chat</p>
+                            <div class="panel_block_input">
+                                <p>Username: </p> <input class="panel_create_chat-input_username" name="friend_username" placeholder="Username your friend"></input>
+                            </div>
+                            <p class="panel-msg">{{ message_create }}</p>
+                            <button type="submit" class="panel_create_chat-btn_create" id="btn_create_chat">Create</button>
+                        </form>
+                    </div>
+                    <div class="body-panel_join_group" id="panel_join_group">
+                        <form action="/join_group" method="post" name="form_join_group" class="panel-form">
+                            <p class="panel_name">Join group</p>
+                            <div class="panel_block_input">
+                                <p>Code: </p> <input class="panel_join_group-input_code" name="code_to_join" placeholder="The code for joining the group"></input>
+                            </div>
+                            <p class="panel-msg">{{ message_join }}</p>
+                            <button type="submit" class="panel_join_group-btn_join" id="btn_join_group">Join</button>
+                        </form>
+                    </div>
+                    <div class="body-panel_create_group" id="panel_create_group">
+                        <form action="/create_group" method="post" name="form_create_group" class="panel-form">
+                            <p class="panel_name">Create group</p>
+                            <div class="panel_block_input">
+                                <p>Name: </p> <input class="panel_create_group-input_name" name="name_group" placeholder="The name of the group"></input>
+                            </div>
+                            <button type="submit" class="panel_create_group-btn_create" id="btn_create_group">Create</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+    
+        </div>
+
+        <div class="chat">
+            <div class="chat-header" id="chat_header">
+               
+            </div>
+
+            <div class="chat-body" id="chat">
+                <div class="messages" id="messages"></div>
+
+                <div class="message_menu" id="message_panel">
+                    <button onclick="copy_message()" class="msg_menu-btn" id="copy_msg"><p style="margin: auto;">Copy</p></button>
+                    <button onclick="reply_message()" class="msg_menu-btn" id="reply_msg"><p style="margin: auto;">Reply</p></button>
+                    <button onclick="forward_message()" class="msg_menu-btn" id="forward_msg"><p style="margin: auto;">Forward</p></button>
+                    <button onclick="edit_message()" class="msg_menu-btn" id="edit_msg"><p style="margin: auto;">Edit</p></button>
+                    <button onclick="delete_message()" class="msg_menu-btn" id="delete_msg"><p style="margin: auto;">Delete</p></button>
+                </div>
+
+            </div>          
+            
+            <div class="chat-footer">
+                <form class="chat-footer-form" action="/message" method="post" name="form_message">
+                    <button class="chat-footer-item-btn" style="margin-left: -48px;" type="button"><img class="chat-footer-item-img" src="..\static\images\icons\clip.svg"></button>
+                    <textarea id="resizeTextarea" input="submit" class="message-text" name="message" rows="1" placeholder="Write a message..."></textarea>
+                    <button class="chat-footer-item-btn" style="margin-left: 685px;" type="button"><img class="chat-footer-item-img" src="..\static\images\icons\smile.svg"></button>
+                    <button class="chat-footer-item-btn" style="margin-left: 745px;" type="button" id="btn_send"><img class="chat-footer-item-img" src="..\static\images\icons\send.svg"></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="..\static\scripts\script.js"></script>
+</body>
+</html>

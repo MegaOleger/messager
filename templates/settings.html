@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Settings</title>
+    <link rel="stylesheet" href="..\static\styles\style_settings.css">
+    <link rel="icon" href="..\static\images\icons\logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="area">
+        <div class="head">
+            <button class="btn_back" onclick="document.location='/'" type="button"><img class="arrow_left" src="..\static\images\icons\arrow.png"></button>
+            <h1 style="color: white; margin-left: 38%;">Settings</h1>
+            <button onclick="document.location='/edit_profile'" class="btn_pencil" type="button"><img class="img_pencil" src="..\static\images\icons\pen.svg"></button>
+            <button onclick="display_setting_panel()" id="btn_panel_dots" class="btn_dots" type="button"><img class="img_dots" src="..\static\images\icons\vertical-dots.svg"></button>
+            <div class="setting_panels" id="setting_panel">
+                <button onclick="document.location='/logout'" class="btn_logout" type="button"><img id="img_logout" src="..\static\images\icons\logout.svg"><p class="txt_logout">Logout</p></button>
+                <hr class="sett_panel_hr">
+                <button onclick="document.location='/delete_user'" class="btn_del_acc" type="button"><img id="img_del_acc" src="..\static\images\icons\delete.svg"><p class="txt_del">Delete an account</p></button>
+            </div>
+        </div>
+        <div class="profile">
+            <div class="profile_img">
+                <img class="img_avatar_profile" src="..\static\images\avatars\{{avatar}}">
+            </div>
+            <div onclick="copy_text('name')" class="profile_block" id="name" title="name lastname"> 
+                <img class="profile_icons" src="..\static\images\icons\profile.svg">
+                <div class="profile_main_info"><p style="border: none;" id="name" class="profile_info-txt">{{ name }} {{ lastname }}</p></div>
+            </div>
+            <div onclick="copy_text('username')" class="profile_block" id="username" title="username"> 
+                <img class="profile_icons" src="..\static\images\icons\at.svg"> 
+                <div class="profile_main_info"><p id="username" class="profile_info-txt">{{ username }}</p></div>
+            </div>
+            <div onclick="copy_text('bday')" class="profile_block" id="bday" title="bday">
+                <img class="profile_icons" src="..\static\images\icons\gift.svg">
+                <div class="profile_main_info"><p id="bday" class="profile_info-txt">{{ bday }}</p> </div>
+            </div>
+            <div onclick="copy_text('bio')" class="profile_block" id="bio" title="bio"> 
+                <img class="profile_icons" src="..\static\images\icons\bio.svg"> 
+                <div class="profile_main_info"><p style="border: none;" id="bio" class="profile_info-txt">{{ bio }}</p></div>
+            </div>
+            <div id="msg_copying" class="message_copy">
+                <p id="msg_target"> copied</p>
+            </div>
+        </div>
+        <div class="settings">
+            <button class="settings_block" id="general">
+                <img class="settings_icons" id="img_setting" src="..\static\images\icons\setting.svg">
+                <div class="security_main_info"><p class="security_info-txt">General Settings</p></div>
+            </button>
+            <hr style="height: 6px; width: 100%; margin: 0px; border: none; background-color: rgb(60, 60, 60);">
+            <button class="settings_block">
+                <img class="settings_icons" id="img_bell" src="..\static\images\icons\bell.svg">
+                <div class="security_main_info"><p class="security_info-txt">Notifications</p></div>
+            </button>
+            <hr style="height: 6px; width: 100%; margin: 0px; border: none; background-color: rgb(60, 60, 60);">
+            <button class="settings_block" style="border:none;">
+                <img class="settings_icons" id="security" src="..\static\images\icons\security.svg">
+                <div class="security_main_info"><p class="security_info-txt">Security</p></div>
+            </button>
+        </div>
+    </div>
+    <script src="..\static\scripts\script.js"></script>
+</body>
+</html>

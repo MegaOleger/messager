@@ -1,0 +1,11 @@
+<p style="margin-top: 10px; margin-bottom: 25px;">Members</p>
+{% for member in members %}
+<a href="/open_chat/{{ member[0] }}" class="member" id="chat_{{ member[0] }}" tabindex="0">
+    <div class="member-avatar">
+        <img class="avatar-image" src="../static/images/avatars/{{ member[3] }}" alt="">
+    </div>
+    <div class="member-name">
+        <div class="name"><p class="member-name">{{ member[1] }} {{ member[2] }}</p></div>
+    </div>                        
+</a>
+{% endfor %}

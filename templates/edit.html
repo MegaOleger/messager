@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Edit Profile</title>
+    <link rel="stylesheet" href="..\static\styles\style_edit_user.css">
+    <link rel="icon" href="..\static\images\icons\logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="area">
+        <div class="head">
+            <button class="btn_back" onclick="document.location='/settings'" type="button"><img class="arrow_left" src="..\static\images\icons\arrow.png"></button>
+            <h1 style="color: white; margin-left: 36.5%;">Edit Profile</h1>
+        </div>
+        <div class="profile">
+            <form style="width: 100%;" action="/save_edit" method="post" name="edit" enctype=multipart/form-data>
+                <div class="profile_img" title="change avatar"> 
+                    <img class="img_avatar_profile" src="..\static\images\avatars\{{avatar}}">
+                    <input style="color: white; background-color: #494949; border-radius: 15px; margin-top: 15px;" name="input_avatar" type="file"> 
+                </div>
+                <div class="profile_block" id="name"> 
+                    <img class="profile_icons" src="..\static\images\icons\profile.svg">
+                    <div class="profile_main_info" title="change name lastname">
+                        <input class="profile_info-txt" name="input_name" type="text" maxlength="15" placeholder="{{ name }}"></input>
+                        <input class="profile_info-txt" name="input_lastname" type="text" maxlength="15" placeholder="{{ lastname }}"></input>
+                    </div>
+                </div>
+                <div class="profile_block" id="username" title="change username"> 
+                    <img class="profile_icons" src="..\static\images\icons\at.svg"> 
+                    <div class="profile_main_info"><input class="profile_info-txt" name="input_username" type="text" maxlength="10" minlength="3" placeholder="{{ username }}"></input></div>
+                </div>
+                <div class="profile_block" id="bday" title="change bday">
+                    <img class="profile_icons" src="..\static\images\icons\gift.svg">
+                    <div class="profile_main_info"><input class="profile_info-txt" name="input_bday" type="date" maxlength="4" placeholder="{{ bday }}"></input> </div>
+                </div>
+                <div class="profile_block" id="bio" title="change bio"> 
+                    <img class="profile_icons" src="..\static\images\icons\bio.svg"> 
+                    <div class="profile_main_info"><input class="profile_info-txt" name="input_bio" type="text" maxlength="150" placeholder="{{ bio }}"></input></div>
+                    <div style="display: inline-flex;">
+                        <button class="btn_form" id="save" type="submit">Save</button>
+                        <hr style="width: 5px; height: 50px; margin-left: 10px; margin-right: 10px; margin-top: 40px; border: none; background-color: #494949; border-radius: 5px; ">
+                        <button onclick="document.location='/reset_edit'" class="btn_form" id="reset" type="button">Reset</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="..\static\scripts\script.js"></script>
+</body>
+</html>

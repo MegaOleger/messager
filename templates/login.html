@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Taynopis</title>
+    <link rel="stylesheet" href="../static/styles/style_log.css" type="text/css">
+    <link rel="icon" href="..\static\images\icons\logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="boxes">
+        <div class="box_1">
+            <img style="width: 50%; margin-left: 25%; margin-top: 15%;" src="../static/images/icons\logo.png">
+            <p style="font-size: 250%; text-align: center;">Taynopis</p>
+        </div>
+        <div class="box_2_log">
+            <form action="/login" method="post" name="login"> 
+                <p class="txt_box">Login</p>
+                <input type="text" class="input_log {% if error_login %}error{% endif %}" name="user_login" minlength="4" required>
+                <div class="message"><p>{{ message_login }}</p></div>
+                <p class="txt_box">Password</p>
+                <input type="password" class="input_log {% if error_password %}error{% endif %}" name="password" minlength="5" required>
+                <a href=""><p class="forgot">Forgot your password?</p></a>
+                <div class="message"><p>{{ message_password }}</p></div>
+                <button class="btn_login" type="submit">Sign in</button>
+                <button class="reg" type="button" onclick="document.location='/registration'">Registration</button>
+            </form>
+
+        </div>
+    </div>
+</body>
+</html>

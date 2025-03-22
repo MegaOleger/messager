@@ -1,0 +1,194 @@
+html {
+  background: rgb(45, 45, 45);
+  background: radial-gradient(
+    circle,
+    rgba(45, 45, 45, 1) -80%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+body {
+  font-family: "Gill Sans", sans-serif;
+  align-items: center;
+  margin: 0px;
+}
+
+/* html{
+    font-family: "Gill Sans", sans-serif;
+    font-size: 1.5em;
+}
+
+body{    
+  height: 100vh;
+  width: 100%;
+  background: rgb(45, 45, 45);
+  background: radial-gradient(
+    circle,
+    rgba(45, 45, 45, 1) -80%,
+    rgba(0, 0, 0, 1) 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: white;
+  display: flex;
+  flex-direction: column;
+} */
+
+a {
+  text-decoration: none;
+}
+
+.boxes {
+  display: flex;
+  /* position: fixed; */
+  max-width: 1000px;
+  min-width: 500px;
+  width: 1000px;
+  margin: auto;
+  margin-top: 20%;
+  align-items: center;
+  border: 3px solid rgb(0, 0, 0);
+  background-color: rgb(30, 30, 30);
+  border-radius: 1px;
+  color: white;
+}
+
+.box_1 {
+  border-right: 2px solid rgb(0, 0, 0); 
+  background-color: rgb(19, 19, 19);
+  user-select: none;
+}
+
+.box_2_reg {
+  margin: auto;
+  font-size: 120%;
+  user-select: none;
+}
+
+.box_2_log {
+  margin: auto;
+  margin-top: 3%;
+  font-size: 130%;
+  user-select: none;
+}
+
+.message{
+  text-align: center;
+  color: red; 
+  font-size: 65%;
+}
+
+.input_log {
+  background-color: rgba(45, 45, 45);
+  color: rgb(255, 255, 255);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  font-size: 80%;
+  width: 98%;
+}
+
+.input_log.error{
+  border-color: red;
+}
+
+.input_reg {
+  background-color: rgba(45, 45, 45);
+  color: rgb(255, 255, 255);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  font-size: 100%;
+}
+
+.input_reg.error{
+  border-color: red;
+}
+
+.date {
+  background-color: rgba(45, 45, 45);
+  color: rgb(255, 255, 255);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  font-size: 140%;
+  text-align: center;
+}
+
+.txt_box {
+  text-align: center;
+  margin-bottom: 3px;
+}
+
+.btn_login {
+  background-color: rgb(0, 0, 0);
+  color: rgb(255, 255, 255);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  width: 100%;
+  font-size: 100%;
+}
+
+.btn_login:hover {
+  background-color: rgb(0, 0, 0);
+  transition: transform 0.2s;
+  transform: scale(1.1);
+}
+
+.btn_reg {
+  background-color: rgb(0, 160, 0);
+  color: rgb(255, 255, 255);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  width: 100%;
+  font-size: 100%;
+}
+
+.btn_reg:hover {
+  background-color: rgb(0, 202, 0);
+  transition: transform 0.2s;
+  transform: scale(1.1);
+}
+
+.reg {
+  background-color: rgb(0, 160, 0);
+  color: rgb(255, 255, 255);
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  width: 100%;
+  margin-top: 15%;
+  font-size: 100%;
+}
+
+.reg:hover {
+  background-color: rgb(0, 160, 0);
+  transition: transform 0.2s;
+  transform: scale(1.1);
+}
+
+.log {
+  background-color: rgb(0, 0, 0);
+  color: rgb(255, 255, 255);
+  border: 2px solid rgb(0, 0, 0);
+  border-radius: 0.5rem;
+  width: 100%;
+  margin-top: 30px;
+  font-size: 100%;
+}
+
+.log:hover {
+  background-color: rgb(0, 0, 0);
+  transition: transform 0.2s;
+  transform: scale(1.1);
+}
+
+.forgot {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.371);
+  font-size: 65%;
+  margin-top: 1px;
+}
+
+.forgot:hover {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+

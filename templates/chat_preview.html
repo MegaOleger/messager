@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Chat</title>
+    <link rel="stylesheet" href="..\static\styles\chat_preview.css">
+    <link rel="icon" href="..\static\images\icons\logo.png" type="image/x-icon">
+</head>
+<body>
+    <div class="area">
+        <div class="head">
+            <button class="btn_back" onclick="document.location='/'" type="button"><img class="arrow_left" src="..\static\images\icons\arrow.png"></button>
+            <h1 style="position: relative; margin-left:35px; color: white;">Chat info</h1>
+            <div>
+                <button onclick="document.location='/edit_profile'" class="btn_pencil" type="button"><img class="img_pencil" src="..\static\images\icons\pen.svg"></button>
+                <button onclick="display_setting_panel()" id="btn_panel_dots" class="btn_dots" type="button"><img class="img_dots" src="..\static\images\icons\vertical-dots.svg"></button>
+            </div>
+            <div class="setting_panels" id="setting_panel">
+                <button onclick="document.location='/leave_chat'" class="panel-btn" id="btn_leave" type="button"><img id="img_leave" src="..\static\images\icons\logout.svg"><p class="panel-txt">Leave chat</p></button>
+                <hr class="sett_panel_hr">
+                <button onclick="document.location='/delete_chat'" class="panel-btn" id="btn_del" type="button"><img id="img_del" src="..\static\images\icons\delete.svg"><p class="panel-txt">Delete chat</p></button>
+            </div>
+        </div>
+        <div class="main">
+            <div class="main_img">
+                <img class="img_avatar" src="..\static\images\avatars\{{avatar}}">
+            </div>
+            <div class="main_block" title="name_chat"> 
+                <p class="txt">{{ name_chat }}</p>
+            </div>
+            {% if chat_type == 2 %}
+            <div class="main_block" title="cnt_members"> 
+                <p class="txt">{{ cnt_members }} members</p>
+            </div>
+            {% endif %}
+            
+        </div>
+        <hr class="sett_panel_hr">
+        <div id="members_list" class="members">
+            <!-- <p style="margin-top: 10px; margin-bottom: 25px;">Members</p>
+            <a href="/open_chat/{{ chat[0] }}" class="member" id="chat_{{ chat[0] }}" tabindex="0">
+                <div class="member-avatar">
+                    <img class="avatar-image" src="../static/images/avatars/{{ chat[3] }}" alt="">
+                </div>
+                <div class="member-name">
+                    <div class="name"><p class="member-name">{{ chat[1] }}</p></div>
+                </div>                        
+            </a> -->
+        </div>
+    </div>
+    <script src="..\static\scripts\script.js"></script>
+</body>
+</html>

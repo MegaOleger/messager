@@ -1,0 +1,99 @@
+@import "reset.css";
+@import "message.css";
+@import "header.css";
+@import "chat-list.css";
+@import "chat.css";
+@import "chat-header.css";
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;1,300&display=swap');
+
+html{
+    /* font-family: 'Roboto', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; */
+    font-family: "Sans Serif", sans-serif;
+    font-size: 1.8em;
+    
+}
+body{    
+    color: white;
+    background: rgb(45, 45, 45);
+    background: radial-gradient(
+        circle,
+        rgba(45, 45, 45, 1) -1%,
+        rgba(0, 0, 0, 1) 100%
+    );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    margin: auto;
+    width: 1250px;
+    height: 100vh;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+/* .header{
+    display: flex;
+    justify-content:flex-end;  
+    background-color: #131313;  
+    height: 20px;
+} */
+
+.main-window{    
+    background-color:black;
+    display: flex;
+    flex-direction: row;
+    height: calc(100vh - 20px);
+    width: 100%;
+    height: 100vh;
+    justify-content: center;          
+}
+.chat{
+    padding-left: 0.5px;
+    width: 70%;
+    height: 100vh;
+    min-height: 500px;
+}   
+.chat-list{
+    display: flex;
+    flex-direction: column;
+    background-color:rgb(30, 30, 30);
+    width: 31%;
+    font-size: 70%;
+    height: 100vh;
+    min-height: 480px;
+    min-width: 290px;
+    /* border-right: 1px solid #1a1a1a; */
+    user-select: none;
+}
+.chat-header{
+    height: 65px;
+    min-height: 3em;
+    background-color: #222222;
+    font-size: 65%;
+    display: flex;
+    justify-content:flex-start;
+    flex-direction: row;    
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;         
+}
+
+
+@media only screen and (max-width:900px){
+    .message-right{
+        align-self: flex-end;
+    } 
+}
+@media only screen and (max-width:700px){
+    .chat-list{
+       width: 0%;
+       min-width: 0%;
+       visibility: hidden;
+    }
+    .left-menu{
+        width: 4%;
+    }
+    .chat{
+        width: 94%;
+    }
+}
