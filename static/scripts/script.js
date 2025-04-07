@@ -298,7 +298,11 @@ socket.on('new_message', (msg) => {
     console.log('MSG: ', msg);
 });
 
-
+// chat_state
+socket.on('chat_action', () => {
+    window.location.reload();
+    // console.log('STATE: ', state)
+})
 
 // scroll chat
 // const observer = new MutationObserver(mutations => scrollChat);
@@ -418,5 +422,28 @@ async function UpdateChatHeader(){
     } catch (error) {
         console.error('Ошибка:', error);
         chat_header.innerHTML = `<p>${error}</p>`;
+    }
+}
+
+// Update members_list
+document.addEventListener('DOMContentLoaded', function () {
+    const uniqueElement = document.getElementById('members_list'); 
+    if (uniqueElement) {
+        UpdateMembersList();
+    }
+});
+
+async function UpdateMembersList(){
+    let members_list = document.getElementById('members_list');
+    try {
+        const response = await fetch('/upd_members_list');
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке сообщений');
+        }
+        const data = await response.text(); // Ожидаем HTML от сервера
+        members_list.innerHTML = data;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        members_list.innerHTML = `<p>${error}</p>`;
     }
 }
