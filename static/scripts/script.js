@@ -267,7 +267,7 @@ document.addEventListener("click", function(event) {
 });
 
 
-// websocket
+// websocket message
 const socket = io({ transports: ['websocket'], alwaysConnect: true });
 document.getElementById('btn_send').addEventListener('click', () => {
     const message = document.getElementById('resizeTextarea').value;
@@ -298,6 +298,61 @@ socket.on('new_message', (msg) => {
     console.log('MSG: ', msg);
 });
 
+
+// chat_state
+
+// document.getElementById('block_user').addEventListener('click', () => {
+//     const state = 2;
+//     if (state) {
+//         socket.emit('chat_state', state);
+//         fetch('/block_user', {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/x-www-form-urlencoded',
+//             },
+//             body: new URLSearchParams({ state }),
+//         })
+//         .then((response) => {
+//             if (!response.ok) {
+//                 console.error('Failed to send state through HTTP:', response.statusText);
+//             }
+//         })
+//         .catch((error) => {
+//             console.error('HTTP error:', error);
+//         });
+//         document.getElementById('resizeTextarea').value = ''; 
+//         console.log('State: ', state)
+//     }
+// });
+
+// document.getElementById('unblock_user').addEventListener('click', () => {
+//     const state = 1;
+//     if (state) {
+//         socket.emit('chat_state', state);
+//         fetch('/block_user', {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/x-www-form-urlencoded',
+//             },
+//             body: new URLSearchParams({ state }),
+//         })
+//         .then((response) => {
+//             if (!response.ok) {
+//                 console.error('Failed to send state through HTTP:', response.statusText);
+//             }
+//         })
+//         .catch((error) => {
+//             console.error('HTTP error:', error);
+//         });
+//         document.getElementById('resizeTextarea').value = ''; 
+//         console.log('State: ', state)
+//     }
+// });
+
+socket.on('chat_action', () => {
+    window.location.reload();
+    // console.log('STATE: ', state)
+})
 
 
 // scroll chat
@@ -418,5 +473,29 @@ async function UpdateChatHeader(){
     } catch (error) {
         console.error('Ошибка:', error);
         chat_header.innerHTML = `<p>${error}</p>`;
+    }
+}
+
+
+// Update members_list
+document.addEventListener('DOMContentLoaded', function () {
+    const uniqueElement = document.getElementById('members_list'); 
+    if (uniqueElement) {
+        UpdateMembersList();
+    }
+});
+
+async function UpdateMembersList(){
+    let members_list = document.getElementById('members_list');
+    try {
+        const response = await fetch('/upd_members_list');
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке сообщений');
+        }
+        const data = await response.text(); // Ожидаем HTML от сервера
+        members_list.innerHTML = data;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        members_list.innerHTML = `<p>${error}</p>`;
     }
 }

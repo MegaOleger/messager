@@ -39,8 +39,7 @@ def get_chats():
             last_msg_elem = [elem[5], elem[6]]
             if last_msg_elem != None:
                 last_msg, date = last_msg_elem
-                date = date.strftime('%d.%m %H:%M')
-                # print('date get_chats: ', date)
+                date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').strftime('%d.%m %H:%M')
             else:
                 last_msg = ""
                 date = ""
@@ -82,7 +81,6 @@ def get_chats():
             chats.append((chat_id, chat_name, chat_type_id, chat_avatar, last_msg, date, cnt_unread_msg, chat_state_id, chat_friend_state_id, chat_role_id))
     # print("chats: ", chats)
     return chats if chats else None
-
 
 
 @app.route("/")
@@ -159,6 +157,8 @@ def home():
         upd_chat_list()
         upd_chat_header()
         upd_chat_messages()
+        upd_chat_state()
+        print(f"CHAT_STATE_ID: {session.get('chat_state_id')}")
         return render_template("home.html")
     else:
         return redirect("/")
@@ -341,7 +341,7 @@ def open_chat(chat_id):
     chat_type_id = sql.get_chat_inf("type", chat_id)
     chat_state_id = sql.get_chat_state_id(chat_id, user_id)
     chat_role_id = sql.get_role_id(chat_id, user_id)
-    if chat_type_id == 1:
+    if chat_type_id == 1: #personal chat
         first_id = int(chat_name.split("_")[0])
         second_id = int(chat_name.split("_")[1])
         friend_id = second_id if user_id == first_id else first_id
@@ -350,7 +350,7 @@ def open_chat(chat_id):
         chat_name = f"{name} {lastname}"
         session['friend_id'] = friend_id
         chat_friend_state_id = sql.get_chat_state_id(chat_id, friend_id)
-    elif chat_type_id == 2:
+    elif chat_type_id == 2: #group chat 
         chat_avatar = sql.get_avatar_group(chat_id)
         chat_friend_state_id = None
         session['friend_id'] = None
@@ -366,28 +366,38 @@ def open_chat(chat_id):
 @app.route("/message", methods=["POST", 'GET'])
 def message():
     if request.method == 'POST':
-        msg = request.form['message']
-        type_id = 1 #text
-        timestamp = datetime.now()
-        user_id = session.get("user_id")
-        chat_id = session.get('chat_id')
-        state_id = 1
-        content_state_id = 1
-        member_id = sql.get_member_id(chat_id, user_id)
-        sql.save_message(msg, type_id, timestamp, member_id, chat_id, state_id, content_state_id)
-        # payload = {'chat_id': chat_id, 'message': msg, 'timestamp': timestamp, 'user_id': user_id}
-        socketIO.emit('new_message', msg)
-        return redirect("/home")
+        # print(f"OPEN CHAT; \nchat_friend_state_id: {session.get('chat_friend_state_id')} \nchat_state_id: {session.get('chat_state_id')}")
+        if session.get('chat_friend_state_id') == 1 and session.get('chat_state_id') == 1: #if chat is not blocked
+            chat_id = session.get('chat_id')
+            user_id = session.get("user_id")
+            msg = request.form['message']
+            type_id = 1 #text
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            state_id = 1
+            content_state_id = 1
+            member_id = sql.get_member_id(chat_id, user_id)
+            sql.save_message(msg, type_id, timestamp, member_id, chat_id, state_id, content_state_id)
+            # payload = {'chat_id': chat_id, 'message': msg, 'timestamp': timestamp, 'user_id': user_id}
+            socketIO.emit('new_message', msg)
+            return redirect("/home")
+        else:
+            print("The chat is blocked")
+            return redirect("/home")
     
 @socketIO.on('message')
 def handle_websocket_message(data):
     # print("DATA websocket: ", data)
-    timestamp = datetime.now()
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # print('TIMESTAMP: ', timestamp)
     chat_id = session.get('chat_id')
     user_id = session.get('user_id')
     payload = {'chat_id': chat_id, 'message': data, 'timestamp': timestamp, 'user_id': user_id}
     # print("payload", payload)
     emit('new_message', payload)
+
+@socketIO.on('chat_action')
+def handle_websocket_chat_action():
+    emit('chat_action')
 
 def get_messages(chat_id):
     messages = sql.get_messages(chat_id)
@@ -395,17 +405,17 @@ def get_messages(chat_id):
     displayed_messages = []
     if messages:
         for msg in messages:
-            displayed_messages.append({"message_id" : msg[0], "message" : msg[1], "message_type_id" : msg[2], "timestamp" : msg[3].strftime('%H:%M'), "user_id" : msg[4], "chat_id" : msg[5], "state_id" : msg[6], "content_state_id" : msg[7], "owner" : True if msg[4]==session.get("user_id") else False, "type_chat" : msg[8], "avatar" : msg[9]})
+            displayed_messages.append({"message_id" : msg[0], "message" : msg[1], "message_type_id" : msg[2], "timestamp" : datetime.strptime(msg[3], '%Y-%m-%d %H:%M:%S').strftime('%H:%M'), "user_id" : msg[4], "chat_id" : msg[5], "state_id" : msg[6], "content_state_id" : msg[7], "owner" : True if msg[4]==session.get("user_id") else False, "type_chat" : msg[8], "avatar" : msg[9]})
         # print(displayed_messages)
         return displayed_messages
     else: return None
-
 
 @app.route("/block_user")
 def block_user():
     friend_id = session.get('friend_id')
     sql.block_user(session.get('chat_id'), friend_id)
     session['chat_friend_state_id'] = 2
+    socketIO.emit('chat_action')
     return redirect("/home")
 
 @app.route("/unblock_user")
@@ -413,17 +423,20 @@ def unblock_user():
     friend_id = session.get('friend_id')
     sql.unblock_user(session.get('chat_id'), friend_id)
     session['chat_friend_state_id'] = 1
+    socketIO.emit('chat_action')
     return redirect("/home")
 
 @app.route("/leave_chat")
 def leave_chat():
     sql.leave_chat(session.get('chat_id'), session.get('user_id'))
     session['chat_id'] = None
+    socketIO.emit('chat_action')
     return redirect("/home")
 
 @app.route("/clear_chat")
 def clear_chat():
     sql.clear_chat(session.get('chat_id'))
+    socketIO.emit('chat_action')
     return redirect("/home")
 
 @app.route("/delete_chat")
@@ -431,9 +444,20 @@ def delete_chat():
     chat_id = session.get('chat_id')
     user_id = session.get('user_id')
     sql.leave_chat(chat_id, user_id)
+    # get all members before delete
+    all_members_id = sql.get_all_members_id(chat_id)
+    for member_id in all_members_id:
+        sql.leave_chat(chat_id, member_id)
     sql.delete_chat(chat_id)
     session['chat_id'] = None
+    socketIO.emit('chat_action')
     return redirect("/home")
+
+@app.route("/upd_chat_state")
+def upd_chat_state():
+    chat_state_id = sql.get_chat_state_id(session.get('chat_id'), session.get('user_id'))
+    session['chat_state_id'] = chat_state_id
+
 
 @app.route("/upd_chat_list")
 def upd_chat_list():
@@ -446,6 +470,7 @@ def upd_chat_list():
         chat_avatar = session.get('chat_avatar')
         chat_state_id = session.get('chat_state_id')
         chat_friend_state_id = session.get('chat_friend_state_id')
+        # print(f"IF chat_id \nchat_friend_state_id: {chat_friend_state_id} \nchat_state_id: {chat_state_id} \nName: {session.get('name')}")
         chat_role_id = session.get('chat_role_id')
         if chat_type_id == 2:
             cnt_members = sql.cnt_members(chat_id)
@@ -464,6 +489,7 @@ def upd_chat_list():
             chat_avatar = session['chat_avatar'] = chat_inf[3]
             chat_state_id = session['chat_state_id'] = chat_inf[7]
             chat_friend_state_id = session['chat_friend_state_id'] = chat_inf[8]
+            print('IF NOT chat_id chat_friend_state_id: ', chat_friend_state_id)
             chat_role_id = session['chat_role_id'] = chat_inf[9]
             # print("Role_id: ", chat_role_id)
             if chat_type_id == 2:
@@ -507,7 +533,6 @@ def upd_chat_messages():
             chat_state_id = session['chat_state_id'] = chat_inf[7]
             chat_friend_state_id = session['chat_friend_state_id'] = chat_inf[8]
             chat_role_id = session['chat_role_id'] = chat_inf[9]
-            # print("Role_id: ", chat_role_id)
             chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, chat_state_id, chat_friend_state_id, chat_role_id]
             # print("chat_inf: ", chat_inf)
             messages = get_messages(chat_id)
