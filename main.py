@@ -236,6 +236,7 @@ def reset_edit():
 def session_edit(**kwargs):
     if not kwargs:
         login = session.get("login")
+        print("SESSION: ", sql.select_info(login))
         username, name, lastname, bday, avatar, bio, user_id = sql.select_info(login)
         if avatar is None:
             avatar = "default_avatar.jpg"
@@ -367,7 +368,7 @@ def open_chat(chat_id):
 def message():
     if request.method == 'POST':
         # print(f"OPEN CHAT; \nchat_friend_state_id: {session.get('chat_friend_state_id')} \nchat_state_id: {session.get('chat_state_id')}")
-        if session.get('chat_friend_state_id') == 1 and session.get('chat_state_id') == 1: #if chat is not blocked
+        if session.get('chat_friend_state_id') == 1 and session.get('chat_state_id') == 1 or session.get('chat_type_id'): #if chat is not blocked
             chat_id = session.get('chat_id')
             user_id = session.get("user_id")
             msg = request.form['message']
