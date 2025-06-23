@@ -23,6 +23,16 @@ def select_info(login):
     if rows: return rows[0]
     else: return False
 
+def select_info_id(user_id):
+    conn = setup_connection('postgresql')
+    cur = conn.cursor()
+    print("USER_ID = ", user_id)
+    cur.execute("SELECT username, bday, bio FROM users WHERE id=%s;", [user_id])
+    rows = cur.fetchall()
+    conn.close()
+    if rows: return rows[0]
+    else: return False
+
 def create_user(login, name, last, bday, password, avatar, bio):
     if login and name and last and bday and password and avatar and bio:
         conn = setup_connection('postgresql')
@@ -121,14 +131,14 @@ def edit_profile(login, avatar, name, lastname, username, bday, bio):
     conn.close()
     return True
 
-def create_chat(creator_id, chat_name, type_chat, role_id, chat_state_id):
+def create_chat(creator_id, chat_name, type_chat):
     conn = setup_connection('postgresql')
     cur = conn.cursor()
     cur.execute("INSERT INTO chats (creator_id, chat_name, type_id) VALUES (%s, %s, %s) RETURNING *;", [creator_id, chat_name, type_chat])
     conn.commit()
-    # print('STATUS: ', conn.info.transaction_status)
     chat_id = cur.fetchone()[0]
-    # print('create_chat sql: ', chat_id)
+    chat_state_id = 1
+    role_id = 1
     cur.execute("INSERT INTO members (chat_id, user_id, role_id, chat_state_id) VALUES (%s, %s, %s, %s);", [chat_id, creator_id, role_id, chat_state_id])
     conn.commit()
     conn.close()
@@ -173,7 +183,8 @@ def add_members(chat_id, user_id):
     conn = setup_connection('postgresql')
     cur = conn.cursor()
     role_id = 3
-    cur.execute("INSERT INTO members (chat_id, user_id, role_id) VALUES (%s, %s, %s);", [chat_id, user_id, role_id])
+    chat_state_id = 1
+    cur.execute("INSERT INTO members (chat_id, user_id, role_id, chat_state_id) VALUES (%s, %s, %s, %s);", [chat_id, user_id, role_id, chat_state_id])
     conn.commit()
     conn.close()
     return True
@@ -186,12 +197,20 @@ def save_message(msg, type_id, timestamp, member_id, chat_id, state_id, content_
     conn.close()
     return True
 
+def delete_message(msg_id):
+    conn = setup_connection('postgresql')
+    cur = conn.cursor()
+    cur.execute("DELETE FROM message_entries WHERE id=%s;", [msg_id])
+    conn.commit()
+    conn.close()
+    return True
+
 def get_messages(chat_id):
     conn = setup_connection('postgresql')
     cur = conn.cursor()
     cur.execute('''SELECT message_entries.id, message_entries.message, message_entries.type_id, 
                 message_entries.timestamp, users.id, message_entries.chat_id, message_entries.state_id, 
-                message_entries.content_state_id, chats.type_id, users.avatar
+                message_entries.content_state_id, chats.type_id, users.avatar, users.username
                 FROM message_entries 
                 INNER JOIN members ON message_entries.member_id = members.id
                 INNER JOIN users ON members.user_id = users.id
@@ -378,15 +397,15 @@ def cnt_members(chat_id):
 def get_members(chat_id):
     conn = setup_connection('postgresql')
     cur = conn.cursor()
-    cur.execute('''SELECT users.name, users.lastname, users.avatar
+    cur.execute('''SELECT users.id, users.name, users.lastname, users.username, users.avatar
                 FROM users
                 INNER JOIN members
                 ON members.user_id = users.id
                 WHERE members.chat_id=%s;''', [chat_id])
-    members = cur.fetchone()
+    members = cur.fetchall()
     conn.close()
     if members: 
-        return members[0]
+        return members
     else: 
         return None
 
@@ -430,3 +449,17 @@ def delete_chat(chat_id):
     conn.close()
     return True
 
+def get_chat_id_users_id(chat_name_1, chat_name_2):
+    conn = setup_connection('postgresql')
+    cur = conn.cursor()
+    cur.execute('''SELECT id
+                FROM chats
+                WHERE chat_name = %s
+                OR chat_name = %s;''', [chat_name_1, chat_name_2])
+    id = cur.fetchone()
+    conn.close()
+    if id:
+        return id[0]
+        print("ID: ", id[0])
+    else:
+        return None

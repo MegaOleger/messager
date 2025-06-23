@@ -16,10 +16,13 @@
             <div class="chat-list-header">
                 <button onclick="display_side_panel()" class="chat-list-header-button_more" id="btn_panel"><img class="img_three-line" src="..\static\images\icons\three-line.svg"></button>
                 <div class="chat-list-header-blockmore" id="panel">
-                    <button onclick="document.location='/settings'" class="chat-list-header-blockmore-btn" type="submit"><img class="chat-list-header-blockmore-img_inbtn" id="setting" src="..\static\images\icons\setting.svg"><p class="chat-list-header-blockmore-txt_inbtn">Setting</p></button>
+                    <button onclick="document.location='/settings'" class="chat-list-header-blockmore-btn" type="submit">
+                        <img class="chat-list-header-blockmore-img_inbtn" id="setting" src="..\static\images\icons\setting.svg">
+                        <p class="chat-list-header-blockmore-txt_inbtn">Setting</p>
+                    </button>
                     <p class="chat-list-header-blockmore-txt">Version: {vers}</p>
                 </div>
-                <input class="chat-list-header-search" rows="1" placeholder="Search"></input>
+                <input class="chat-list-header-search" rows="1" placeholder="Search chat" id="search_chat"></input>
             </div>
             
             <div>
@@ -67,19 +70,23 @@
         </div>
 
         <div class="chat">
-            <div class="chat-header" id="chat_header">
-               
-            </div>
+            <div class="chat-header" id="chat_header"></div>
 
             <div class="chat-body" id="chat">
-                <div class="messages" id="messages"></div>
 
-                <div class="message_menu" id="message_panel">
-                    <button onclick="copy_message()" class="msg_menu-btn" id="copy_msg"><p style="margin: auto;">Copy</p></button>
-                    <button onclick="reply_message()" class="msg_menu-btn" id="reply_msg"><p style="margin: auto;">Reply</p></button>
-                    <button onclick="forward_message()" class="msg_menu-btn" id="forward_msg"><p style="margin: auto;">Forward</p></button>
-                    <button onclick="edit_message()" class="msg_menu-btn" id="edit_msg"><p style="margin: auto;">Edit</p></button>
-                    <button onclick="delete_message()" class="msg_menu-btn" id="delete_msg"><p style="margin: auto;">Delete</p></button>
+                <div class="messages" id="messages"></div>
+            
+                <div class="message_menu" id="message_panel_user">
+                    <button class="msg_menu-btn" data-action="copy"><p style="margin: auto;">Copy</p></button>
+                    <button onclick="reply_message()" class="msg_menu-btn" data-action="reply"><p style="margin: auto;">Reply</p></button>
+                    <button onclick="forward_message()" class="msg_menu-btn" data-action="forward"><p style="margin: auto;">Forward</p></button>
+                    <button onclick="edit_message()" class="msg_menu-btn" data-action="edit"><p style="margin: auto;">Edit</p></button>
+                    <button onclick="delete_message()" class="msg_menu-btn" data-action="delete"><p style="margin: auto;">Delete</p></button>
+                </div>
+                <div class="message_menu" id="message_panel_friend">
+                    <button class="msg_menu-btn" data-action="copy"><p style="margin: auto;">Copy</p></button>
+                    <button onclick="reply_message()" class="msg_menu-btn" data-action="reply"><p style="margin: auto;">Reply</p></button>
+                    <button onclick="forward_message()" class="msg_menu-btn" data-action="forward"><p style="margin: auto;">Forward</p></button>
                 </div>
 
             </div>          
@@ -89,7 +96,7 @@
                     <button class="chat-footer-item-btn" style="margin-left: -48px;" type="button"><img class="chat-footer-item-img" src="..\static\images\icons\clip.svg"></button>
                     <textarea id="resizeTextarea" input="submit" class="message-text" name="message" rows="1" placeholder="Write a message..."></textarea>
                     <button class="chat-footer-item-btn" style="margin-left: 685px;" type="button"><img class="chat-footer-item-img" src="..\static\images\icons\smile.svg"></button>
-                    <button class="chat-footer-item-btn" style="margin-left: 745px;" type="button" id="btn_send"><img class="chat-footer-item-img" src="..\static\images\icons\send.svg"></button>
+                    <button class="chat-footer-item-btn" style="margin-left: 745px;" type="submit" id="btn_send"><img class="chat-footer-item-img" src="..\static\images\icons\send.svg"></button>
                 </form>
             </div>
         </div>
