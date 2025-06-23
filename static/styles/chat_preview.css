@@ -111,7 +111,8 @@ a {
     /* height:10%; */
     background-color: #131313;
     position: absolute;
-    margin-right: 0.5%;
+    margin-left: -230px;
+    z-index: 1;
     top: 75px;
     border-radius: 15px;
     padding-top: 5px;
@@ -119,6 +120,7 @@ a {
     border: 1px solid black;
 }
 .panel-btn{
+    background-color:#1c1c1c;
     display: flex;
     width: 95%;
     height: 50px;
@@ -150,23 +152,17 @@ a {
     transform: scale(0.97);
     transition: transform 0.3s;
 }
-#img_leave {
-    width: 10%;
-    filter: invert(50%);
-}
 
         /* btn delete */
-#btn_del {
+/* #btn_del {
     background-color: #450000;
 }
 #btn_del:hover {
     background-color: #220000;
     transform: scale(0.97);
     transition: transform 0.3s;
-}
+} */
 #img_del {
-    width: 10%;
-    filter: invert(50%);
     margin-left: 3px;
 }
         /* hr */
@@ -195,7 +191,14 @@ a {
     background-color: #13131300;
     color: white;
     user-select: none;
-
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+.txt{
+    font-size: 25px;
+    user-select: text;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 .main_img {
     display: flex;
@@ -218,6 +221,7 @@ a {
 }
 
 
+
 /* settings */
 .members {
     display: flex;
@@ -226,25 +230,33 @@ a {
     width: 100%;
     user-select: none;
     font-family: "VERDANA", sans-serif;
+    position: relative;
 }
 .member{
     height: 60px;
+    width: 400px;
     padding-bottom: 5px;
     padding-top: 5px;
     display: flex;
     flex-direction: row;    
     justify-content: flex-start;
+    border: 2px solid #505050;
     border-radius: 15px;
     margin-left: 1.5px;
     margin-right: 1px;
     margin-top: 0.3px;
     text-decoration: none;
     color: white;
+    margin-bottom: 5px;
 
     -moz-user-select: none;
     -khtml-user-select: none;
     -webkit-user-select: none;
     user-select: none; 
+}
+
+.member:hover {
+    background-color: #131313;
 }
 
 /* avatar */
@@ -273,25 +285,86 @@ a {
 
 /* name */
 .member-name{
-    margin-left: 2%;
     display: flex;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 280px;
     flex-direction: column;
-    width: 58%;    
-    font-size: 0.80em;
-    margin-top: auto;
-    margin-bottom: auto;
-    margin-left: 10px;
+    flex-wrap: wrap;
+    align-content: stretch;
+    justify-content: center;
+    align-items: stretch;
 }
-.name{
-    height: 14px;
-    width: 200px;
-    margin-top: 0px;
-}
-.member-name{
-    overflow: hidden;
+.info{
+    max-width: 180px;
     text-overflow: ellipsis;
     white-space: nowrap;
-    width: 100%;
-    height: 20px;
+    overflow: hidden;
     font-size: 15px;
+    user-select: all;
+}
+
+
+/* panels */
+.img_btn {
+    width: 10%;
+    filter: invert(50%);
+    margin-left: 3px;
+}
+.panel-btn:hover{
+    background-color: #262626;
+}
+.panel-btn:hover .img_btn{
+    filter: invert(80%);
+    transition: 0.3s;   
+}
+.panel-btn:hover .panel-txt{
+    color: rgb(206, 206, 206);
+}
+.panel-btn:hover #block{
+    transition: 0.3s;   
+    transform: rotate(45deg);
+}
+.panel-btn:hover #unblock{
+    transition: 0.3s;   
+    transform: rotate(-45deg);
+}
+#btn_del{
+    background-color: rgb(90, 0, 0);
+}
+#btn_del:hover{
+    background-color: rgb(110, 0, 0);
+}
+#block_user_txt{
+    color: rgb(175, 1, 1);
+}
+.panel-btn:hover #block_user_txt{
+    color: rgb(211, 0, 0);
+}
+#unblock_user_txt{
+    color: rgb(16, 175, 1);
+}
+.panel-btn:hover #unblock_user_txt{
+    color: rgb(0, 211, 21);
+}
+
+
+.btn{
+    border-radius: 25px;
+    background-color: green;
+    border: 2px solid black;
+    color: white;
+    width: 100px;
+    height: 50px;
+    font-size: 18px;
+}
+
+.btn:hover{
+    background-color: rgb(0, 96, 0);
+}
+.btn:focus{
+    background-color: rgb(0, 77, 0);
 }

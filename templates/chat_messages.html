@@ -1,37 +1,42 @@
-{% if chat[5] == 2 %}
-<div class="chat_blocked">You are blocked in this chat</div>
-{% elif chat[5] == 1 %}
-{% if chat[6] == 2 %}
-<div class="chat_blocked">You have blocked this chat</div>
-{% elif chat[6] == 1 or chat[6] == None %}
-{% if messages %}
-{% for msg in messages %}
-{% if msg["owner"] == False %}
-<div class="message-avatar"><img src="../static/images/avatars/{{msg['avatar']}}" class="avatar-img"></div>
-<div class="message-left" id="message" oncontextmenu="display_msg_panel()">
-    <div class="message-body">
-        <div class="message-body-text">{{ msg["message"] }}</div>
-        <div class="message-body-date-seen">
-            <div class="message-body-date">{{ msg["timestamp"] }}</div>  
-            <div class="message-body-seen"></div>
-        </div>                                
-    </div>                          
-</div>
-{% elif msg["owner"] == True %}
-<div class="message-right" id="message" oncontextmenu="display_msg_panel()">
-    <div class="message-body">
-        <div class="message-body-text">{{ msg["message"] }}</div>
-        <div class="message-body-date-seen">
-            <div class="message-body-date">{{ msg["timestamp"] }}</div>      
-            <div class="message-body-seen"></div>
-        </div>    
-    </div> 
-</div>
+{% if chat[5] == 2 %} <!--if you are blocked -->
+    <div class="chat_blocked">You are blocked in this chat</div>
+{% elif chat[5] == 1 %} <!--if you are unblocked -->
+    {% if chat[6] == 2 %} <!--if you blocked -->
+        <div class="chat_blocked">You have blocked this chat</div>
+    {% elif chat[6] == 1 or chat[6] == None %} <!--if you didn't block -->
+        {% if list_messages %}
+            {% for date in list_messages.keys() %}
+                <div class="date" id="{{ date }}">
+                    <p class="datestamp">{{ date }}</p>
+                    <hr style="margin-bottom: 15px; width: 80%; border: 2px dashed #484848; border-radius: 5px; ">
+                    {% for msg in list_messages[date] %}
+                        {% if msg["owner"] == False %}
+                            <div class="message-avatar"><img src="../static/images/avatars/{{msg['avatar']}}" class="avatar-img"></div>
+                            <div class="message-left message" id="message" data-message-id="{{ msg['message_id'] }}" data-username="{{ msg['username'] }}">
+                                <div class="message-body">
+                                    <div class="message-body-text">{{ msg["message"] }}</div>
+                                    <div class="message-body-date-seen">
+                                        <div class="message-body-date">{{ msg["timestamp"] }}</div>  
+                                        <div class="message-body-seen"></div>
+                                    </div>                                
+                                </div>                          
+                            </div>
+                        {% elif msg["owner"] == True %}
+                            <div class="message-right message" id="message" data-message-id="{{ msg['message_id'] }}"  data-username="{{ msg['username'] }}">
+                                <div class="message-body">
+                                    <div class="message-body-text">{{ msg["message"] }}</div>
+                                    <div class="message-body-date-seen">
+                                        <div class="message-body-date">{{ msg["timestamp"] }}</div>      
+                                        <div class="message-body-seen"></div>
+                                    </div>    
+                                </div> 
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div> <!-- div date -->
+            {% endfor %} <!-- for msg -->
+        {% elif not messages %}
+            <div class="messages_empty">The chat is empty</div>
+        {% endif %}
+    {% endif %}
 {% endif %}
-{% endfor %}
-{% elif not messages %}
-<div class="messages_empty">The chat is empty</div>
-{% endif %}
-{% endif %}
-{% endif %}
-<!-- <script src="..\static\scripts\script.js"></script> -->
