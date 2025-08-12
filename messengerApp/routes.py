@@ -1,89 +1,26 @@
-from flask import Flask, render_template, request, abort, session, redirect
-from datetime import datetime
-import jwt
-from dateutil import parser
-from flask_socketio import SocketIO, emit
-import sqlconnector as sql
+from flask import session, redirect, request, render_template, Blueprint
 import logging 
+# import __init__
+from datetime import datetime
 
 logger = logging.Logger(__name__)
-logger.setLevel(logging.INFO)
+main_bp = Blueprint("main", __name__)
 
-app = Flask(__name__)
-app.secret_key = "test"
-socketIO = SocketIO(app)
+from .crud import (
+    create_user, check_login, get_password,
+    edit_profile, delete_user, create_chat, save_message,
+    get_chat_inf, join_group, leave_chat, block_user,
+    unblock_user, clear_chat, get_members, 
+    get_member_id, get_avatar_group, get_chat_state_id, get_role_id,
+    check_chat_name, check_group_joined, check_code, get_name_friend,
+    add_avatar_chat, check_username, add_members, get_chat_id, add_token_chat, 
+    get_avatar_friend, get_cnt_members, get_chat_id_by_names, get_user_info_by_id
+)
 
-def get_token(user_id, chat_id):
-    payload = {
-        'user' : user_id,
-        'chat' : chat_id
-    }
-    token = jwt.encode(payload=payload, key=app.secret_key) 
-    token = token.split('.')[1]
-    return token
+from .utils import (session_edit, clear_session, get_session, get_chats, get_token, get_messages)
+from .extensions import socketio
 
-def get_chats():
-    user_id = session.get("user_id")
-    chat_list = sql.get_chat_list(user_id)
-    chat_list_empty = sql.get_chat_list_empty(user_id)
-    # print('chat_list get_chats: ', chat_list)
-    # print('chat_list_empty: ', chat_list_empty)
-    chats = []
-    if chat_list:
-        for elem in chat_list:
-            chat_id = elem[0]
-            chat_name = elem[1]
-            chat_type_id = elem[2]
-            chat_state_id = elem[3]
-            chat_role_id = elem[4]
-            last_msg_elem = [elem[5], elem[6]]
-            if last_msg_elem != None:
-                last_msg, date = last_msg_elem
-                date = date.strftime('%d.%m %H:%M')
-                # print('date get_chats: ', date)
-            else:
-                last_msg = ""
-                date = ""
-            if chat_type_id == 1:
-                first_id = int(chat_name.split("_")[0])
-                second_id = int(chat_name.split("_")[1])
-                friend_id = second_id if user_id == first_id else first_id
-                name, lastname = sql.get_name_friend(friend_id)
-                chat_avatar = sql.get_avatar_friend(friend_id)
-                chat_name = f"{name} {lastname}"
-                chat_friend_state_id = sql.get_chat_state_id(elem[0], friend_id)
-            elif chat_type_id == 2:
-                chat_avatar = sql.get_avatar_group(elem[0])
-                chat_friend_state_id = None
-            cnt_unread_msg = 100
-            chats.append((elem[0], chat_name, chat_type_id, chat_avatar, last_msg, date, cnt_unread_msg, chat_state_id, chat_friend_state_id, chat_role_id))
-    
-    if chat_list_empty:
-        for elem in chat_list_empty:
-            chat_id = elem[0]
-            chat_name = elem[1]
-            chat_type_id = elem[2]
-            chat_state_id = elem[3]
-            chat_role_id = elem[4]
-            last_msg = ''
-            date = ''
-            if chat_type_id == 1:
-                first_id = int(chat_name.split("_")[0])
-                second_id = int(chat_name.split("_")[1])
-                friend_id = second_id if user_id == first_id else first_id
-                name, lastname = sql.get_name_friend(friend_id)
-                chat_avatar = sql.get_avatar_friend(friend_id)
-                chat_name = f"{name} {lastname}"
-                chat_friend_state_id = sql.get_chat_state_id(chat_id, friend_id)
-            elif chat_type_id == 2:
-                chat_avatar = sql.get_avatar_group(chat_id)
-                chat_friend_state_id = None
-            cnt_unread_msg = 100
-            chats.append((chat_id, chat_name, chat_type_id, chat_avatar, last_msg, date, cnt_unread_msg, chat_state_id, chat_friend_state_id, chat_role_id))
-    # print("chats: ", chats)
-    return chats if chats else None
-
-@app.route("/")
+@main_bp.route("/")
 def index():
     if session.get("logged_in"):
         session_edit()
@@ -92,13 +29,13 @@ def index():
         session["logged_in"] = False
         return redirect("/login")
 
-@app.route("/login", methods=["GET", "POST"])
+@main_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method=="POST":
         logger.info("post on /login")
         input_login = request.form["user_login"]
         input_password = request.form["password"]
-        valid_password = sql.get_password(input_login)
+        valid_password = get_password(input_login)
         if valid_password is None:
             logger.error(f"user {input_login} not found")
             message_login = f"{input_login} is not registered"
@@ -117,7 +54,7 @@ def login():
     else:
         return render_template("login.html")
 
-@app.route("/registration", methods=["GET", "POST"])
+@main_bp.route("/registration", methods=["GET", "POST"])
 def registration():
     if request.method=="POST":
         input_login = request.form['reg_login']
@@ -125,7 +62,7 @@ def registration():
         input_name = request.form['reg_name']
         input_lastname = request.form['reg_lastname']
         input_bday = request.form['bday']
-        user_id = sql.check_login(input_login)
+        user_id = check_login(input_login)
 
         if user_id is not None:
             message_login = f"{input_login} is already occupied"
@@ -134,24 +71,20 @@ def registration():
         else:
             avatar = "default_avatar.jpg"
             bio = "Bio is empty"
-            sql.create_user(input_login, input_name, input_lastname, input_bday, input_password, avatar, bio)
+            create_user(input_login, input_name, input_lastname, input_bday, input_password, avatar, bio)
             session["logged_in"] = True
             session['login'] = input_login
             session_edit()
             return redirect("/home")
     else:
         return render_template('registration.html')
-
-def clear_session():
-    session.clear()
-    session["logged_in"] = False
-
-@app.route("/logout")
+    
+@main_bp.route("/logout")
 def logout():
     clear_session()
     return redirect("/")
 
-@app.route("/home", methods=["GET", "POST"])
+@main_bp.route("/home", methods=["GET", "POST"])
 def home():
     if session.get("logged_in"):
         upd_chat_list()
@@ -161,7 +94,7 @@ def home():
     else:
         return redirect("/")
 
-@app.route("/settings", methods=["GET"])
+@main_bp.route("/settings", methods=["GET"])
 def settings():
     if session.get("logged_in"):
         username, name, lastname, bday, avatar, bio = get_session(session.get("login"))
@@ -172,17 +105,17 @@ def settings():
     else:
         return redirect("/")
 
-@app.route("/delete_user")
+@main_bp.route("/delete_user")
 def delete_user():
     if session.get("logged_in"):
-        if sql.delete_user(session.get("login"), session.get("user_id")):
+        if delete_user(session.get("login"), session.get("user_id")):
             return redirect("/logout")
         else:
             return False
     else:
         return redirect("/")
     
-@app.route("/edit_profile", methods=["GET"])
+@main_bp.route("/edit_profile", methods=["GET"])
 def edit_profile():
     if session.get("logged_in"):
         username, name, lastname, bday, avatar, bio = get_session(session.get("login"))
@@ -190,7 +123,7 @@ def edit_profile():
     else:
         return redirect("/")
 
-@app.route("/save_edit", methods=["POST", "GET"])
+@main_bp.route("/save_edit", methods=["POST", "GET"])
 def save_edit():
     if request.method=="POST":
         if session.get("logged_in"):
@@ -216,7 +149,7 @@ def save_edit():
             else: 
                 filename = avatar
 
-            sql.edit_profile(session.get("login"), filename, name, lastname, username, bday, bio)
+            edit_profile(session.get("login"), filename, name, lastname, username, bday, bio)
             session_edit(name=name, lastname=lastname, username=username, bday=bday, bio=bio, avatar=filename)
             return redirect("/edit_profile")
         else: 
@@ -224,44 +157,14 @@ def save_edit():
     else:
         return redirect('/edit_profile')
 
-@app.route("/reset_edit")
+@main_bp.route("/reset_edit")
 def reset_edit():
     if session.get("logged_in"):
         return redirect("/edit_profile")
     else: 
         return redirect("/")
-        
-def session_edit(**kwargs):
-    if not kwargs:
-        login = session.get("login")
-        user_id, username, name, lastname, bday, avatar, bio = sql.select_info(login)
-        if avatar is None:
-            avatar = "default_avatar.jpg"
-        if username is None:
-            username = login
-        if bio is None:
-            bio = "Bio is empty"
-        session['username'] = username
-        session['name'] = name
-        session['lastname'] = lastname
-        session['bday'] = bday
-        session['avatar'] = avatar
-        session['bio'] = bio
-        session['user_id'] = user_id
     
-    else:
-        session['username'] = kwargs.get("username")
-        session['name'] = kwargs.get("name")
-        session['lastname'] = kwargs.get("lastname")
-        session['bday'] = kwargs.get("bday")
-        session['avatar'] = kwargs.get("avatar")
-        session['bio'] = kwargs.get("bio")
-
-def get_session(login):
-    if session.get('login') == login:
-        return session.get('username'), session.get('name'), session.get('lastname'), session.get('bday'), session.get('avatar'), session.get('bio')
-
-@app.route("/create_chat", methods=["POST", 'GET'])
+@main_bp.route("/create_chat", methods=["POST", 'GET'])
 def create_chat():
     if request.method=="POST":
         friend_username = request.form['friend_username']
@@ -269,10 +172,10 @@ def create_chat():
         if friend_username != username: 
             if friend_username[0] == "@":
                 friend_username = friend_username[1:]
-            if sql.check_username(friend_username) is not None:
+            if check_username(friend_username) is not None:
                 user_id = session.get('user_id')
-                friend_id = sql.check_username(friend_username)
-                if sql.check_chat_name(f"{user_id}_{friend_id}", f"{friend_id}_{user_id}") is None:
+                friend_id = check_username(friend_username)
+                if check_chat_name(f"{user_id}_{friend_id}", f"{friend_id}_{user_id}") is None:
                     chat_name = f"{user_id}_{friend_id}"
                     # print('chat_name: ', type(chat_name))
                     # date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -280,10 +183,10 @@ def create_chat():
                     role_id = 1
                     chat_state_id = 1
                     # print("create_chat: ", user_id, chat_name, chat_type_id, role_id, chat_state_id)
-                    chat_id = session['chat_id'] = sql.create_chat(user_id, chat_name, chat_type_id, role_id, chat_state_id)
+                    chat_id = session['chat_id'] = create_chat(user_id, chat_name, chat_type_id, role_id, chat_state_id)
                     # token = get_token(user_id, chat_id)
                     # sql.add_token_chat(chat_id, token)
-                    sql.add_members(chat_id, friend_id)
+                    add_members(chat_id, friend_id)
                     return redirect('/home')
                 else:
                     msg = 'Such a chat has already been created'
@@ -295,16 +198,16 @@ def create_chat():
             msg = 'This is your username'
             return redirect("/home")
 
-@app.route("/join_group", methods=['POST', 'GET'])
+@main_bp.route("/join_group", methods=['POST', 'GET'])
 def join_group():
     if request.method=="POST":
         token = request.form['code_to_join']
-        if sql.check_code(token) is not None:
+        if check_code(token) is not None:
             user_id = session.get('user_id')
-            chat_id = sql.get_chat_id(token)
-            if not sql.check_group_joined(user_id, chat_id):
+            chat_id = get_chat_id(token)
+            if not check_group_joined(chat_id, user_id):
                 role_id = 3
-                sql.join_group(chat_id, user_id, role_id)
+                join_group(chat_id, user_id, role_id)
                 return redirect('/home')
             else:
                 msg = 'You have already joined'
@@ -314,7 +217,7 @@ def join_group():
             msg = 'The code was not found'
             return render_template('home.html', message_join=msg)
 
-@app.route("/create_group", methods=['POST', 'GET'])
+@main_bp.route("/create_group", methods=['POST', 'GET'])
 def create_group():
     if request.method=="POST":
         chat_name = request.form['name_group']
@@ -324,32 +227,32 @@ def create_group():
         role_id = 1
         chat_state_id = 1
         avatar = "default_group.png"
-        chat_id = sql.create_chat(user_id, chat_name, type_chat, role_id, chat_state_id)
+        chat_id = create_chat(user_id, chat_name, type_chat, role_id, chat_state_id)
         open_chat(chat_id)
-        sql.add_avatar_chat(chat_id, avatar)
+        add_avatar_chat(chat_id, avatar)
         token = get_token(user_id, chat_id)
-        sql.add_token_chat(chat_id, token)
+        add_token_chat(chat_id, token)
         # return render_template('home.html', code = token)
         return redirect('/home')
 
-@app.route("/open_chat/<int:chat_id>", methods=['POST', 'GET'])
+@main_bp.route("/open_chat/<int:chat_id>", methods=['POST', 'GET'])
 def open_chat(chat_id):
     user_id = session.get('user_id')
-    chat_name = sql.get_chat_inf("name", chat_id)
-    chat_type_id = sql.get_chat_inf("type", chat_id)
-    chat_state_id = sql.get_chat_state_id(chat_id, user_id)
-    chat_role_id = sql.get_role_id(chat_id, user_id)
+    chat_name = get_chat_inf("name", chat_id)
+    chat_type_id = get_chat_inf("type", chat_id)
+    chat_state_id = get_chat_state_id(chat_id, user_id)
+    chat_role_id = get_role_id(chat_id, user_id)
     if chat_type_id == 1:
         first_id = int(chat_name.split("_")[0])
         second_id = int(chat_name.split("_")[1])
         friend_id = second_id if user_id == first_id else first_id
-        name, lastname = sql.get_name_friend(friend_id)
-        chat_avatar = sql.get_avatar_friend(friend_id)
+        name, lastname = get_name_friend(friend_id)
+        chat_avatar = get_avatar_friend(friend_id)
         chat_name = f"{name} {lastname}"
         session['friend_id'] = friend_id
-        chat_friend_state_id = sql.get_chat_state_id(chat_id, friend_id)
+        chat_friend_state_id = get_chat_state_id(chat_id, friend_id)
     elif chat_type_id == 2:
-        chat_avatar = sql.get_avatar_group(chat_id)
+        chat_avatar = get_avatar_group(chat_id)
         chat_friend_state_id = None
         session['friend_id'] = None
     session['chat_id'] = chat_id
@@ -361,79 +264,58 @@ def open_chat(chat_id):
     session['chat_role_id'] = chat_role_id
     return redirect("/home")
 
-@app.route("/message", methods=["POST", 'GET'])
+@main_bp.route("/message", methods=["POST", 'GET'])
 def message():
     if request.method == 'POST':
         msg = request.form['message']
+        print('msg: ', msg)
         type_id = 1 #text
         timestamp = datetime.now()
         user_id = session.get("user_id")
         chat_id = session.get('chat_id')
         state_id = 1
         content_state_id = 1
-        member_id = sql.get_member_id(chat_id, user_id)
-        sql.save_message(msg, type_id, timestamp, member_id, chat_id, state_id, content_state_id)
+        member_id = get_member_id(chat_id, user_id)
+        save_message(msg, type_id, timestamp, member_id, chat_id, state_id, content_state_id)
         # payload = {'chat_id': chat_id, 'message': msg, 'timestamp': timestamp, 'user_id': user_id}
-        socketIO.emit('new_message', msg)
+        socketio.emit('new_message', msg)
         return redirect("/home")
     
-@socketIO.on('message')
-def handle_websocket_message(data):
-    # print("DATA websocket: ", data)
-    timestamp = datetime.now()
-    chat_id = session.get('chat_id')
-    user_id = session.get('user_id')
-    payload = {'chat_id': chat_id, 'message': data, 'timestamp': timestamp, 'user_id': user_id}
-    # print("payload", payload)
-    emit('new_message', payload)
-
-def get_messages(chat_id):
-    messages = sql.get_messages(chat_id)
-    # print("Messages: ", messages, type(messages))
-    displayed_messages = []
-    if messages:
-        for msg in messages:
-            displayed_messages.append({"message_id" : msg[0], "message" : msg[1], "message_type_id" : msg[2], "timestamp" : msg[3].strftime('%H:%M'), "user_id" : msg[4], "chat_id" : msg[5], "state_id" : msg[6], "content_state_id" : msg[7], "owner" : True if msg[4]==session.get("user_id") else False, "type_chat" : msg[8], "avatar" : msg[9]})
-        # print(displayed_messages)
-        return displayed_messages
-    else: return None
-
-
-@app.route("/block_user")
+@main_bp.route("/block_user")
 def block_user():
     friend_id = session.get('friend_id')
-    sql.block_user(session.get('chat_id'), friend_id)
+    block_user(session.get('chat_id'), friend_id)
     session['chat_friend_state_id'] = 2
     return redirect("/home")
 
-@app.route("/unblock_user")
+@main_bp.route("/unblock_user")
 def unblock_user():
     friend_id = session.get('friend_id')
-    sql.unblock_user(session.get('chat_id'), friend_id)
+    unblock_user(session.get('chat_id'), friend_id)
     session['chat_friend_state_id'] = 1
     return redirect("/home")
 
-@app.route("/leave_chat")
+@main_bp.route("/leave_chat")
 def leave_chat():
-    sql.leave_chat(session.get('chat_id'), session.get('user_id'))
+    leave_chat(session.get('chat_id'), session.get('user_id'))
     session['chat_id'] = None
     return redirect("/home")
 
-@app.route("/clear_chat")
+@main_bp.route("/clear_chat")
 def clear_chat():
-    sql.clear_chat(session.get('chat_id'))
+    clear_chat(session.get('chat_id'))
     return redirect("/home")
 
-@app.route("/delete_chat")
+@main_bp.route("/delete_chat")
 def delete_chat():
     chat_id = session.get('chat_id')
     user_id = session.get('user_id')
-    sql.leave_chat(chat_id, user_id)
-    sql.delete_chat(chat_id)
+    leave_chat(chat_id, user_id)
+    delete_chat(chat_id)
     session['chat_id'] = None
     return redirect("/home")
 
-@app.route("/upd_chat_list")
+@main_bp.route("/upd_chat_list")
 def upd_chat_list():
     chat_id = session.get('chat_id')
     chats = get_chats()
@@ -446,7 +328,7 @@ def upd_chat_list():
         chat_friend_state_id = session.get('chat_friend_state_id')
         chat_role_id = session.get('chat_role_id')
         if chat_type_id == 2:
-            cnt_members = sql.cnt_members(chat_id)
+            cnt_members = get_cnt_members(chat_id)
         else:
             cnt_members = None
         chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, cnt_members, chat_state_id, chat_friend_state_id, chat_role_id]
@@ -465,7 +347,7 @@ def upd_chat_list():
             chat_role_id = session['chat_role_id'] = chat_inf[9]
             # print("Role_id: ", chat_role_id)
             if chat_type_id == 2:
-                cnt_members = sql.cnt_members(chat_id)
+                cnt_members = get_cnt_members(chat_id)
             else:
                 cnt_members = None
             chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, cnt_members, chat_state_id, chat_friend_state_id, chat_role_id]
@@ -474,10 +356,11 @@ def upd_chat_list():
         else:
             return render_template("chat_list.html", chat=None)
 
-@app.route("/upd_chat_messages")
+@main_bp.route("/upd_chat_messages")
 def upd_chat_messages():
     chat_id = session.get('chat_id')
     chats = get_chats()
+    user_id = session.get('user_id')
     # print("CHATS messages: ", chats)
     if chat_id:
         chat_name = session.get('chat_name')
@@ -490,8 +373,9 @@ def upd_chat_messages():
         chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, cnt_members, chat_state_id, chat_friend_state_id, chat_role_id]
         # print("chat_inf messages: ", chat_inf)
         messages = get_messages(chat_id)
+        # print('1 messages: ', messages)
         if messages:
-            return render_template("chat_messages.html", chat=chat_inf, messages=messages)
+            return render_template("chat_messages.html", chat=chat_inf, messages=messages, user_id=user_id)
         else:
             return render_template("chat_messages.html", chat=chat_inf)
     else:
@@ -509,14 +393,15 @@ def upd_chat_messages():
             chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, chat_state_id, chat_friend_state_id, chat_role_id]
             # print("chat_inf: ", chat_inf)
             messages = get_messages(chat_id)
+            # print('2 messages: ', messages)
             if messages:
-                return render_template("chat_messages.html", chat=chat_inf, messages=messages)
+                return render_template("chat_messages.html", chat=chat_inf, messages=messages, user_id=user_id)
             else:
                 return render_template("chat_messages.html", chat=chat_inf)
         else:
             return render_template("chat_messages.html", chat=None)
 
-@app.route('/upd_chat_header')
+@main_bp.route('/upd_chat_header')
 def upd_chat_header():
     chat_id = session.get('chat_id')
     chats = get_chats()
@@ -529,7 +414,7 @@ def upd_chat_header():
         chat_friend_state_id = session.get('chat_friend_state_id')
         chat_role_id = session.get('chat_role_id')
         if chat_type_id == 2:
-            cnt_members = sql.cnt_members(chat_id)
+            cnt_members = get_cnt_members(chat_id)
         else:
             cnt_members = None
         chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, cnt_members, chat_state_id, chat_friend_state_id, chat_role_id]
@@ -551,27 +436,69 @@ def upd_chat_header():
         else:
             return render_template("chat_header.html", chat=None)
 
-@app.route('/copy_inv_code')
+@main_bp.route('/copy_inv_code')
 def copy_inf_code():
-    token = sql.get_chat_inf('token', session.get('chat_id'))
+    token = get_chat_inf('token', session.get('chat_id'))
     if token:
         return token
     else:
         return redirect("/home")
 
-@app.route('/upd_members_list')
-def upd_members_list(chat_id):
-    members = sql.get_members(chat_id)
-    render_template('members_list', members=members)
 
-@app.route('/chat_preview')
+@main_bp.route("/open_chat_preview/<int:friend_id>", methods=['POST', 'GET'])
+def open_chat_preview(friend_id):
+    user_id = session.get('user_id')
+    name, lastname = get_name_friend(friend_id)
+    chat_name_1 = f'{user_id}_{friend_id}'
+    chat_name_2 = f'{friend_id}_{user_id}'
+    chat_id = get_chat_id_by_names(chat_name_1, chat_name_2)
+    
+    if chat_id:
+        session['chat_id'] = chat_id
+        session['chat_name'] = f"{name} {lastname}"
+        session['role_id'] = get_role_id(chat_id, user_id)
+        session['chat_friend_state_id'] = get_chat_state_id(chat_id, friend_id)
+        session['chat_state_id'] = get_chat_state_id(chat_id, user_id)  # Исправлено с friend_id на user_id
+        session['chat_type_id'] = 1
+        session['chat_avatar'] = get_avatar_friend(friend_id)
+        session['friend_id'] = friend_id
+    else:
+        session['chat_name'] = f'{name} {lastname}'
+        session['chat_type_id'] = 1
+        session['role_id'] = 1
+        session['chat_state_id'] = 1
+        session['chat_friend_state_id'] = 1
+        chat_id = create_chat(user_id, f'{user_id}_{friend_id}', 1)
+        session['chat_id'] = chat_id
+        session['friend_id'] = friend_id
+        session['chat_avatar'] = get_avatar_friend(friend_id)
+        add_members(chat_id, friend_id)
+    
+    return redirect("/chat_preview")
+    
+
+@main_bp.route('/chat_preview')
 def chat_preview():
-    chat_id = session.get('chat_id')
     chat_name = session.get('chat_name')
-    cnt_members = session.get('cnt_members')
-    type_chat = session.get('type_chat')
-    upd_members_list(chat_id)
-    render_template('chat_preview.html', chat_name=chat_name, cnt_members=cnt_members, type_chat=type_chat)
-
-if __name__ == "__main__":
-    socketIO.run(app, debug=True)
+    chat_type_id = session.get('chat_type_id')
+    chat_avatar = session.get('chat_avatar')
+    chat_id = session.get('chat_id')
+    # print(f'chat_name: {chat_name}\ncnt_members: {cnt_members}\nchat_type_id: {chat_type_id}')
+    if chat_type_id == 1:
+        friend_id = session.get('friend_id')
+        role_id = session.get('role_id')
+        chat_friend_state_id = session.get('chat_friend_state_id')
+        friend_info = get_user_info_by_id(friend_id)
+        return render_template("chat_preview.html", chat_name=chat_name, chat_type_id=chat_type_id, chat_avatar = chat_avatar, role_id = role_id, chat_friend_state_id = chat_friend_state_id, friend_info=friend_info, chat_id=chat_id)
+    elif chat_type_id == 2:
+        members = get_members(chat_id)
+        print('members: ', members)
+        cnt_members = get_cnt_members(chat_id)
+        return render_template("chat_preview.html", 
+                            chat_name=chat_name, 
+                            cnt_members=cnt_members, 
+                            chat_type_id=chat_type_id, 
+                            chat_avatar=chat_avatar,
+                            members=members,
+                            user_id=session.get('user_id'),
+                            chat_id=chat_id)

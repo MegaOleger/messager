@@ -185,3 +185,35 @@
 .msg_menu-btn:hover{
   background-color: rgb(42, 42, 42);
 }
+
+.datestamp{
+  background-color: #484848;
+  color: white;
+  width: 150px;
+  height: 35px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  display: flex;
+  /* border: 1px solid rgba(0, 0, 0, 0.656); */
+  border-radius: 50px;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  margin-bottom: -28px;
+}
+
+.date{
+  overflow-y:visible;
+  padding-top: 5px; 
+  align-self: center;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  line-height: 1em;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  caret-color: transparent;
+  margin-bottom: 15px;
+}

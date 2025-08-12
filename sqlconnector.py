@@ -17,7 +17,7 @@ def setup_connection(db='sqlite'):
 def select_info(login):
     conn = setup_connection('postgresql')
     cur = conn.cursor()
-    cur.execute("SELECT username, name, lastname, bday, avatar, bio, id FROM users WHERE login=%s;", [login])
+    cur.execute("SELECT id, username, name, lastname, bday, avatar, bio FROM users WHERE login=%s;", [login])
     rows = cur.fetchall()
     conn.close()
     if rows: return rows[0]
@@ -68,7 +68,7 @@ def check_code(token):
         else: return None
     else: return None
 
-def check_group_joined(user_id, chat_id):
+def check_group_joined(chat_id, user_id):
     conn = setup_connection('postgresql')
     cur = conn.cursor()
     cur.execute("SELECT id FROM members WHERE user_id = %s AND chat_id = %s;", [user_id, chat_id])

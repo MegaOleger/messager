@@ -1,57 +1,75 @@
 <a href="/chat_preview" class="chat-header-avatar">
     {% if chat[3] %}
-    <img src="../static/images/avatars/{{chat[3]}}" class="chat-header-avatar_img">
+        <img src="../static/images/avatars/{{chat[3]}}" class="chat-header-avatar_img">
     {% endif %}
 </a>
 <a href="/chat_preview" class="chat-header-name-status">
     {% if chat[1] %}
-    <p class="chat-header-name">{{ chat[1] }}</p>
+        <p class="chat-header-name">{{ chat[1] }}</p>
     {% endif %}
     {% if not chat[4]%}
-    <p class="chat-header-status">{{ chat[] }}</p>
+        <p class="chat-header-status">{{ chat[] }}</p>
     {% elif chat[4] > 1 %}
-    <p class="chat-header-cht_members">{{ chat[4] }} members</p>
+        <p class="chat-header-cht_members">{{ chat[4] }} members</p>
     {% elif chat[4] == 1 %}
-    <p class="chat-header-cht_members">{{ chat[4] }} member</p>
+        <p class="chat-header-cht_members">{{ chat[4] }} member</p>
     {% endif %}
 </a>
+<div class="search_msges" id="search_msg">
+    <input class="msges_input" rows="1" id="input_msg" placeholder="Search message"></input>
+    <div class="msges_area">
+        <!-- <a href="" class="searched_msg" id="" tabindex="0">
+            <div class="msg_avatar">
+                <img class="avatar_img" src="../static/images/avatars/" alt="">
+            </div>
+            <div class="name_msg">
+                <p class="name_txt">Name</p>
+                <p class="msg_txt">Nothing</p>
+            </div>                        
+            <div class="msg_date">
+                <p class="date_txt">01.01.0001</p>  
+                <p class="time_txt">01:01</p> 
+            </div>
+        </a> -->
+    </div>
+</div>
 <div class="chat_header_buttons">
-    <button class="chat_header_button"><img class="chat_header_button_img" src="..\static\images\icons\search.svg"></button>          
+    <button onclick="display_search_msg()" id="btn_display_search_msg" class="chat_header_button"><img class="chat_header_button_img" src="..\static\images\icons\search.svg"></button>          
     <button onclick="display_chat_menu()" class="chat_header_button" id="btn_chat_menu">
         <img class="chat_header_button_img" src="..\static\images\icons\vertical-dots.svg">
     </button>          
     <div class="chat_header-chat_menu" id="chat_menu">
-        {% if chat[2] == 1 %}
-        {% if chat[6] == 1 %}
-        <button class="chat_menu-btn" id="block_user" onclick="document.location='/block_user'">
-            <img class="chat_menu-img" id="block" src="..\static\images\icons\block.svg"><p class="chat_menu-btn-txt">Block user</p>
-        </button>
-        {% elif chat[6] == 2 %}
-        <button class="chat_menu-btn" id="unblock_user" onclick="document.location='/unblock_user'">
-            <img class="chat_menu-img" id="unblock" src="..\static\images\icons\block.svg"><p class="chat_menu-btn-txt">Unblock user</p>
-        </button>
-        {% endif %}
-        <button class="chat_menu-btn" id="clear_user" onclick="document.location='/clear_chat'">
-            <img class="chat_menu-img" src="..\static\images\icons\clear_chat.svg"><p class="chat_menu-btn-txt">Clear chat</p>
-        </button>
-        <button class="chat_menu-btn" id="delete_user" onclick="document.location='/delete_chat'">
-            <img class="chat_menu-img" src="..\static\images\icons\delete_chat.svg"><p class="chat_menu-btn-txt">Delete chat</p>
-        </button>
-        {% elif chat[2] == 2 %}
-        <button class="chat_menu-btn" id="inv_code_btn" onclick="copyCode()">
-            <img class="chat_menu-img" src="..\static\images\icons\join_group.svg"><p class="chat_menu-btn-txt">Invitation code</p>
-        </button>
-        <button class="chat_menu-btn" id="leave_chat" onclick="document.location='/leave_chat'">
-            <img class="chat_menu-img" src="..\static\images\icons\logout.svg"><p class="chat_menu-btn-txt">Leave chat</p>
-        </button>
-        {% if chat[7] == 1 or chat[7] == 2 %}
-        <button class="chat_menu-btn" id="clear_user" onclick="document.location='/clear_chat'">
-            <img class="chat_menu-img" src="..\static\images\icons\clear_chat.svg"><p class="chat_menu-btn-txt">Clear chat</p>
-        </button>
-        <button class="chat_menu-btn" id="delete_user" onclick="document.location='/delete_chat'">
-            <img class="chat_menu-img" src="..\static\images\icons\delete_chat.svg"><p class="chat_menu-btn-txt">Delete chat</p>
-        </button>
-        {% endif %}
+        {% if chat[2] == 1 %} <!-- personal -->
+            {% if chat[6] == 1 %}  <!-- unblock -->
+                <button class="chat_menu-btn" id="block_user" onclick="document.location='/block_user'">
+                    <img class="chat_menu-img" id="block" src="..\static\images\icons\block.svg"><p class="chat_menu-btn-txt">Block user</p>
+                </button>
+            {% elif chat[6] == 2 %} <!-- block -->
+                <button class="chat_menu-btn" id="unblock_user" onclick="document.location='/unblock_user'">
+                    <img class="chat_menu-img" id="unblock" src="..\static\images\icons\block.svg"><p class="chat_menu-btn-txt">Unblock user</p>
+                </button>
+            {% endif %}
+            <button class="chat_menu-btn" id="clear_chat" onclick="document.location='/clear_chat'">
+                <img class="chat_menu-img" src="..\static\images\icons\clear_chat.svg"><p class="chat_menu-btn-txt">Clear chat</p>
+            </button>
+            <button class="chat_menu-btn" id="delete_chat" onclick="document.location='/delete_chat'">
+                <img class="chat_menu-img" src="..\static\images\icons\delete_chat.svg"><p class="chat_menu-btn-txt">Delete chat</p>
+            </button>
+        {% elif chat[2] == 2 %} <!-- group -->
+            <button class="chat_menu-btn" id="inv_code_btn" onclick="copyCode()">
+                <img class="chat_menu-img" src="..\static\images\icons\join_group.svg"><p class="chat_menu-btn-txt">Invitation code</p>
+            </button>
+            <button class="chat_menu-btn" id="leave_chat" onclick="document.location='/leave_chat'">
+                <img class="chat_menu-img" src="..\static\images\icons\logout.svg"><p class="chat_menu-btn-txt">Leave chat</p>
+            </button>
+            {% if chat[7] == 1 or chat[7] == 2 %} <!-- creator or admin -->
+                <button class="chat_menu-btn" id="clear_chat" onclick="document.location='/clear_chat'">
+                    <img class="chat_menu-img" src="..\static\images\icons\clear_chat.svg"><p class="chat_menu-btn-txt">Clear chat</p>
+                </button>
+                <button class="chat_menu-btn" id="delete_chat" onclick="document.location='/delete_chat'">
+                    <img class="chat_menu-img" src="..\static\images\icons\delete_chat.svg"><p class="chat_menu-btn-txt">Delete chat</p>
+                </button>
+            {% endif %}
         {% endif %}
     </div>
 </div> 
