@@ -3,3 +3,7 @@
 
 #all local .db files
 *.db 
+
+
+__pycache__/
+*.pyс

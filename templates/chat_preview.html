@@ -56,9 +56,9 @@
             <div class="main_block"> 
                 <p id="chat_name" class="txt" title="name">{{ chat_name }}</p>
                 {% if chat_type_id == 1 %}
-                    <p id="username" class="txt" title="username">@{{ friend_info[0] }}</p>
-                    <p id="bday" class="txt" title="bday">{{ friend_info[1] }}</p>
-                    <p id="bio" style="border: none;" class="txt" title="bio">{{ friend_info[2] }}</p>
+                    <p id="username" class="txt" title="username">@{{ friend_info.username }}</p>
+                    <p id="bday" class="txt" title="bday">{{ friend_info.bday }}</p>
+                    <p id="bio" style="border: none;" class="txt" title="bio">{{ friend_info.bio }}</p>
                 {% endif %}
             </div>
             <!-- {% if chat_type_id == 2 %}
@@ -75,7 +75,32 @@
         {% endif %}
         {% if chat_type_id == 2 %} <!-- if group -->
             <hr class="sett_panel_hr">
-            <div id="members_list" class="members"></div>
+            <div id="members_list" class="members">
+                 <p style="margin-top: 10px; margin-bottom: 25px; font-size: 20px">Members: {{ cnt_members }}</p>
+                {% for member in members %}
+                    {% if member.id == user_id %}
+                        <a href="/settings" class="member" id="{{ member.id }}" tabindex="0">
+                            <div class="member-avatar">
+                                <img class="avatar-image" src="../static/images/avatars/{{ member.avatar }}" alt="">
+                            </div>
+                            <div class="member-name">
+                                <p class="info" style="margin-right: 15px;">{{ member.name }} {{ member.lastname }}</p>
+                                <p class="info">@{{ member.username }}</p>
+                            </div>                        
+                        </a>
+                    {% elif member[0] != user_id %}
+                        <a href="/open_chat_preview/{{ member.id }}" class="member" id="{{ member.id }}" tabindex="0">
+                            <div class="member-avatar">
+                                <img class="avatar-image" src="../static/images/avatars/{{ member.avatar }}" alt="">
+                            </div>
+                            <div class="member-name">
+                                <p class="info" style="margin-right: 15px;">{{ member.name }} {{ member.lastname }}</p>
+                                <p class="info">@{{ member.username }}</p>
+                            </div>                        
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
         {% endif %}
     </div>
     <script src="..\static\scripts\script.js"></script>

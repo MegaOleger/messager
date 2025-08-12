@@ -198,165 +198,6 @@ async function copyCode(){
 }
 
 
-// right click message panel
-let currentMessageId = null;
-const messagePanel_user = document.getElementById("message_panel_user");
-const messagePanel_friend = document.getElementById("message_panel_friend");
-
-// Handler for all messages
-document.addEventListener('contextmenu', function(event) {
-    const messageElement_user = event.target.closest('.message-right');
-    if (!messageElement_user) return;
-    
-    event.preventDefault();
-    // currentMessageId = messageElement_user.dataset.messageId;
-    // const messageBodyText = messageElement_user.querySelector('.message-body-text');
-    // var MessageText = messageBodyText ? messageBodyText.innerText : '';
-    // console.log('MessageText: ', MessageText)
-
-    // Panel positioning
-    var x = Math.min(event.clientX, window.innerWidth - messagePanel_user.offsetWidth - 5);
-    var y = Math.min(event.clientY, window.innerHeight - messagePanel_user.offsetHeight - 5);
-    
-    messagePanel_user.style.display = "flex";
-    messagePanel_user.style.left = `${x}px`;
-    messagePanel_user.style.top = `${y}px`;
-});
-
-document.addEventListener('contextmenu', function(event) {
-    const messageElement_friend = event.target.closest('.message-left');
-    if (!messageElement_friend) return;
-    
-    event.preventDefault();
-    // currentMessageId = messageElement_friend.dataset.messageId;
-    // const messageBodyText = messageElement_friend.querySelector('.message-body-text');
-    // var MessageText = messageBodyText ? messageBodyText.innerText : '';
-    // console.log('MessageText: ', MessageText)
-
-    // Panel positioning
-    var x = Math.min(event.clientX, window.innerWidth - messagePanel_friend.offsetWidth - 5);
-    var y = Math.min(event.clientY, window.innerHeight - messagePanel_friend.offsetHeight - 5);
-    
-    messagePanel_friend.style.display = "flex";
-    messagePanel_friend.style.left = `${x}px`;
-    messagePanel_friend.style.top = `${y}px`;
-});
-
-// Closing when clicked outside the panel
-document.addEventListener('click', function(event) {
-    if (!messagePanel_user.contains(event.target)) {
-        messagePanel_user.style.display = "none";
-    }
-    if (!messagePanel_friend.contains(event.target)) {
-        messagePanel_friend.style.display = "none";
-    } 
-});
-
-// Handlers for menu buttons
-if (messagePanel_user){
-    messagePanel_user.addEventListener('click', function(event) {
-        const button = event.target.closest('.msg_menu-btn');
-        if (!button) return;
-        
-        const action = button.dataset.action;
-        executeMenuAction(action, messageElement_user);
-        messagePanel_user.style.display = "none";
-    });
-    
-    // Closing when the cursor leaves
-    messagePanel_user.addEventListener('mouseleave', function() {
-        messagePanel_user.style.display = "none";
-    });
-}
-
-if (messagePanel_friend){
-    messagePanel_friend.addEventListener('click', function(event) {
-        const button = event.target.closest('.msg_menu-btn');
-        if (!button) return;
-        
-        const action = button.dataset.action;
-        executeMenuAction(action, messageElement_user);
-        messagePanel_friend.style.display = "none";
-    });
-    
-    // Closing when the cursor leaves
-    messagePanel_friend.addEventListener('mouseleave', function() {
-        messagePanel_friend.style.display = "none";
-    });
-}
-
-
-// Action functions
-function executeMenuAction(action, msg) {
-    switch(action) {
-        case 'copy':
-            copyMessage(msg);
-            break;
-        case 'reply':
-            replyMessage(msg);
-            break;
-        case 'forward':
-            forwardMessage(msg);
-            break;
-        case 'edit':
-            editMessage(msg);
-            break;
-        case 'delete':
-            deleteMessage(msg);
-            break;
-    }
-    // console.log(`Action: ${action}, Message ID: ${messageId}`);
-}
-
-function copyMessage(id) { 
-    // const messageBodyText = messageElement_user.querySelector('.message-body-text');
-    var MessageText = messageBodyText ? messageBodyText.innerText : '';
-    console.log('MessageText: ', MessageText)
-    navigator.clipboard.writeText(MessageText)
-}
-function replyMessage(id) { 
-
-}
-function forwardMessage(id) { 
-
-}
-function editMessage(id) { 
-    fetch(`/edit_message/${id}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ id }),
-    })
-    .then((response) => {
-        if (!response.ok) {
-            console.error('Failed to send id through HTTP:', response.statusText);
-        }
-    })
-    .catch((error) => {
-        console.error('HTTP error:', error);
-    });
-}
-function deleteMessage(id) {
-    fetch(`/delete_message/${id}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ id }),
-    })
-    .then((response) => {
-        if (!response.ok) {
-            console.error('Failed to send id through HTTP:', response.statusText);
-        }
-    })
-    .catch((error) => {
-        console.error('HTTP error:', error);
-    });
-}
-
-
-
 // websocket
 // const socket = io({ transports: ['websocket'], alwaysConnect: true });
 // document.getElementById('btn_send').addEventListener('click', () => {
@@ -424,6 +265,7 @@ function display_chat_menu(){
     }
     else{
         side_chat_menu_displayed = true;
+        // console.log(chat_menu)
         chat_menu.style.display = "flex";
     }
 }
@@ -498,24 +340,6 @@ async function UpdateChatHeader(){
     }
 }
 
-// Update members_list
-async function UpdateMembersList(){
-    let members_list = document.getElementById('members_list');
-    // console.log('members_list: ', members_list)
-    try {
-        const response = await fetch('/upd_members_list');
-        if (!response.ok) {
-            throw new Error('Ошибка при загрузке страницы');
-        }
-        const data = await response.text(); 
-        members_list.innerHTML = data;
-    } catch (error) {
-        console.error('Ошибка:', error);
-        members_list.innerHTML = `<p>${error}</p>`;
-    }
-}
-
-
 // search chat
 const search_chat = document.getElementById('search_chat');
 if (search_chat){
@@ -546,7 +370,7 @@ var side_search_msg_displayed = false;
 const btn_display_search_msg = document.getElementById('btn_display_search_msg');
 function display_search_msg(){
     var search_msg = document.getElementById('search_msg');
-    console.log('search_msg: ', search_msg)
+    // console.log('search_msg: ', search_msg)
     if (side_search_msg_displayed){
         side_search_msg_displayed = false;
         search_msg.style.display = "none";
@@ -654,52 +478,165 @@ document.addEventListener("click", function(event) {
     }
 });
 
+// right click message panel
+let currentMessageId = null;
+const messagePanel_user = document.getElementById("message_panel_user");
+const messagePanel_friend = document.getElementById("message_panel_friend");
+
+// Handler for all messages
+document.addEventListener('contextmenu', function(event) {
+    const messageElement_user = event.target.closest('.message-right');
+    if (!messageElement_user) return;
+    
+    event.preventDefault();
+    // currentMessageId = messageElement_user.dataset.messageId;
+    // const messageBodyText = messageElement_user.querySelector('.message-body-text');
+    // var MessageText = messageBodyText ? messageBodyText.innerText : '';
+    // console.log('MessageText: ', MessageText)
+
+    // Panel positioning
+    var x = Math.min(event.clientX, window.innerWidth - messagePanel_user.offsetWidth - 5);
+    var y = Math.min(event.clientY, window.innerHeight - messagePanel_user.offsetHeight - 5);
+    
+    messagePanel_user.style.display = "flex";
+    messagePanel_user.style.left = `${x}px`;
+    messagePanel_user.style.top = `${y}px`;
+});
+
+document.addEventListener('contextmenu', function(event) {
+    const messageElement_friend = event.target.closest('.message-left');
+    if (!messageElement_friend) return;
+    
+    event.preventDefault();
+    // currentMessageId = messageElement_friend.dataset.messageId;
+    // const messageBodyText = messageElement_friend.querySelector('.message-body-text');
+    // var MessageText = messageBodyText ? messageBodyText.innerText : '';
+    // console.log('MessageText: ', MessageText)
+
+    // Panel positioning
+    var x = Math.min(event.clientX, window.innerWidth - messagePanel_friend.offsetWidth - 5);
+    var y = Math.min(event.clientY, window.innerHeight - messagePanel_friend.offsetHeight - 5);
+    
+    messagePanel_friend.style.display = "flex";
+    messagePanel_friend.style.left = `${x}px`;
+    messagePanel_friend.style.top = `${y}px`;
+});
+
+// Closing when clicked outside the panel
+document.addEventListener('click', function(event) {
+    if (!messagePanel_user.contains(event.target)) {
+        messagePanel_user.style.display = "none";
+    }
+    if (!messagePanel_friend.contains(event.target)) {
+        messagePanel_friend.style.display = "none";
+    } 
+});
+
+// Handlers for menu buttons
+if (messagePanel_user){
+    messagePanel_user.addEventListener('click', function(event) {
+        const button = event.target.closest('.msg_menu-btn');
+        if (!button) return;
+        
+        const action = button.dataset.action;
+        console.log('action: ', action)
+        console.log('msg: ', messageElement_user)
+        executeMenuAction(action, messageElement_user);
+        messagePanel_user.style.display = "none";
+    });
+    
+    // Closing when the cursor leaves
+    messagePanel_user.addEventListener('mouseleave', function() {
+        messagePanel_user.style.display = "none";
+    });
+}
+
+if (messagePanel_friend){
+    messagePanel_friend.addEventListener('click', function(event) {
+        const button = event.target.closest('.msg_menu-btn');
+        if (!button) return;
+        
+        const action = button.dataset.action;
+        executeMenuAction(action, messageElement_user);
+        messagePanel_friend.style.display = "none";
+    });
+    
+    // Closing when the cursor leaves
+    messagePanel_friend.addEventListener('mouseleave', function() {
+        messagePanel_friend.style.display = "none";
+    });
+}
 
 
-// Search msg
-// var search_msg = document.getElementById('search_msg');
-// search_msg.addEventListener('input', async () => {
-//     let input_msg = search_msg.value;
-//     // console.log('INPUT_MSG: ', input_msg);
-//     let all_blocks_dates = document.getElementsByClassName('date');
-//     // console.log('all_blocks_dates: ', all_blocks_dates)
-//     let blocks_dates = {};
-//     for (const i of all_blocks_dates){
-//         date = i.id
-//         let msges = {}
-//         let all_msges = i.getElementsByClassName('message');
-//         // console.log('ALL_MSGes: ', all_msges)
-//         for (const j of all_msges){
-//             let msg = j.querySelector(".message-body-text");
-//             let msg_id = j.dataset.messageId;
-//             let txt_msg = msg.innerText;
-//             // console.log('msg_id: ', msg_id, 'txt_msg: ', txt_msg);
-//             msges[msg_id] = txt_msg;
-//             // msges.push({[msg_id]: txt_msg});
-//         }
-//         console.log('date: ', date, 'msges: ', msges);
-//         blocks_dates[date] = msges;
-//         // blocks_dates.push({[date]: msges});
-//     }
-//     console.log('blocks_dates: ', blocks_dates);
-// })
+// Action functions
+function executeMenuAction(action, msg) {
+    console.log('act: ', action)
+    console.log('msg: ', msg)
+    switch(action) {
+        case 'copy':
+            console.log('COPY')
+            copyMessage(msg);
+            break;
+        case 'reply':
+            replyMessage(msg);
+            break;
+        case 'forward':
+            forwardMessage(msg);
+            break;
+        case 'edit':
+            editMessage(msg);
+            break;
+        case 'delete':
+            deleteMessage(msg);
+            break;
+    }
+    // console.log(`Action: ${action}, Message ID: ${messageId}`);
+}
 
+function copyMessage(id) { 
+    console.log('COPPPYYY')
+    // const messageBodyText = messageElement_user.querySelector('.message-body-text');
+    var MessageText = messageBodyText ? messageBodyText.innerText : '';
+    console.log('MessageText: ', MessageText)
+    navigator.clipboard.writeText(MessageText)
+}
+function replyMessage(id) { 
 
-// for (let i=0; i<blocks_dates.length; i++){
-//     const [[data, msges_map]] = Object.entries(blocks_dates[i]);
-//     for (msges_map; key; value) {
-//         if (!value.toLowerCase().includes(input_msg.toLowerCase())){
-//             document.getElementById(key).style.display = "none";
-//         }
-//         else if (value.toLowerCase().includes(input_msg.toLowerCase())){
-//             console.log('Value: ', value)
-//             document.getElementById(key).style.display = "flex";
-//         }
-//     }
-//     if (blocks_dates[data].length == 0){
-//         document.getElementById(data).style.display = "none";
-//     }
-//     else if (blocks_dates[data].length > 0){
-//         document.getElementById(data).style.display = "flex";
-//     }
-// }
+}
+function forwardMessage(id) { 
+
+}
+function editMessage(id) { 
+    fetch(`/edit_message/${id}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ id }),
+    })
+    .then((response) => {
+        if (!response.ok) {
+            console.error('Failed to send id through HTTP:', response.statusText);
+        }
+    })
+    .catch((error) => {
+        console.error('HTTP error:', error);
+    });
+}
+function deleteMessage(id) {
+    fetch(`/delete_message/${id}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ id }),
+    })
+    .then((response) => {
+        if (!response.ok) {
+            console.error('Failed to send id through HTTP:', response.statusText);
+        }
+    })
+    .catch((error) => {
+        console.error('HTTP error:', error);
+    });
+}
