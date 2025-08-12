@@ -1,5 +1,5 @@
 {% for chat in chat_list %}
-<a href="/open_chat/{{ chat[0] }}" class="body-element" id="chat_{{ chat[0] }}" tabindex="0">
+<a href="/open_chat/{{ chat[0] }}" class="body-element" id="{{ chat[0] }}" tabindex="0">
     <div class="chat-list-body-element-avatar">
         <img class="chat-list-body-element-avatar-image" src="../static/images/avatars/{{ chat[3] }}" alt="">
     </div>

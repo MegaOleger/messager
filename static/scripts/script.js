@@ -1,3 +1,5 @@
+// const { createElement } = require("react");
+
 document.addEventListener('contextmenu', event => event.preventDefault())
 
 // more
@@ -17,7 +19,7 @@ function display_side_panel(){
 document.addEventListener("click", function(event) {
     if (!panel.contains(event.target) && !btn_panel.contains(event.target)) {
         panel.style.display = "none";
-        side_panel_displayed = false;
+        side_panel_displayed = false;   
     }
 });
 
@@ -73,11 +75,12 @@ function message_copying(target) {
 
 // textarea
 const textarea = document.getElementById('resizeTextarea');
+if (textarea){
 textarea.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = this.scrollHeight + 'px';
 });
-
+}
 
 // plus panel
 var side_plus_panel_displayed = false;
@@ -172,50 +175,6 @@ document.addEventListener("click", function(event) {
     }
 });
 
-
-// panel invitation code
-// var side_inv_code_displayed = false;
-// var inv_code = document.getElementById("panel_inv_code");
-// var btn_inv_code = document.getElementById("btn_create_group"); 
-// function display_side_inv_code(){
-//     console.log("panel inv code", inv_code)
-//     if (side_inv_code_displayed){
-//         side_inv_code_displayed = false;
-//         create_inv_code.style.display = "none";
-//         console.log('1')
-//     }
-//     else{
-//         side_inv_code_displayed = true;
-//         inv_code.style.display = "flex";
-//         plus_panel.style.display = "none";
-//         side_plus_panel_displayed = false;
-//         console.log('2')
-//     }
-// }
-// document.addEventListener("click", function(event) {
-//     if (!inv_code.contains(event.target) && !btn_inv_code.contains(event.target)) {
-//         inv_code.style.display = "none";
-//         side_inv_code_displayed = false;
-//     }
-// });
-
-
-// copy code
-// var copyBtn = document.getElementById('code');
-// copyBtn.addEventListener('click', function(event) {
-//     textToCopy = copyBtn.innerText;
-
-//     navigator.clipboard.writeText(textToCopy)
-//         .then(() => {
-//             console.log('Code: ' + textToCopy);
-//             alert('The code has been copied\n Code to join: ' + textToCopy);
-//         })
-//         .catch(err => {
-//             console.error('Error: ', err);
-//             alert('Error');
-//         });
-// });
-
 async function copyCode(){
     try {
         const response = await fetch('/copy_inv_code');
@@ -240,37 +199,41 @@ async function copyCode(){
 
 
 // websocket
-const socket = io({ transports: ['websocket'], alwaysConnect: true });
-document.getElementById('btn_send').addEventListener('click', () => {
-    const message = document.getElementById('resizeTextarea').value;
-    if (message) {
-        socket.emit('message', message);
-        fetch('/message', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({ message }),
-        })
-        .then((response) => {
-            if (!response.ok) {
-                console.error('Failed to send message through HTTP:', response.statusText);
-            }
-        })
-        .catch((error) => {
-            console.error('HTTP error:', error);
-        });
-        document.getElementById('resizeTextarea').value = ''; 
-        console.log('Message: ', message)
-    }
-});
+// const socket = io({ transports: ['websocket'], alwaysConnect: true });
+// document.getElementById('btn_send').addEventListener('click', () => {
+//     const message = document.getElementById('resizeTextarea').value;
+//     if (message) {
+//         socket.emit('message', message);
+//         fetch('/message', {
+//             method: 'POST',
+//             headers: {
+//                 'Content-Type': 'application/x-www-form-urlencoded',
+//             },
+//             body: new URLSearchParams({ message }),
+//         })
+//         .then((response) => {
+//             if (!response.ok) {
+//                 console.error('Failed to send message through HTTP:', response.statusText);
+//             }
+//         })
+//         .catch((error) => {
+//             console.error('HTTP error:', error);
+//         });
+//         document.getElementById('resizeTextarea').value = ''; 
+//         console.log('Message: ', message)
+//     }
+// });
 
-socket.on('new_message', (msg) => {
-    window.location.reload();
-    console.log('MSG: ', msg);
-});
+// socket.on('new_message', (msg) => {
+//     window.location.reload();
+//     console.log('MSG: ', msg);
+// });
 
-
+// // chat_state
+// socket.on('chat_action', () => {
+//     window.location.reload();
+//     // console.log('STATE: ', state)
+// })
 
 // scroll chat
 // const observer = new MutationObserver(mutations => scrollChat);
@@ -313,22 +276,28 @@ document.addEventListener("click", function(event) {
     }
 });
 
+// Update
+document.addEventListener('DOMContentLoaded', function () {
+    let chat_header = document.getElementById('chat_header'); 
+    let messages = document.getElementById('messages'); 
+    let chat_list = document.getElementById('chat_list');
+    let members_list = document.getElementById('members_list'); 
+
+    if (chat_header) {UpdateChatHeader();}
+    if (messages) {UpdateChatMessages();}
+    if (chat_list) {UpdateChatList();}
+    if (members_list) {UpdateMembersList();}
+
+});
 
 
 // Update Chat List
-document.addEventListener('DOMContentLoaded', function () {
-    const uniqueElement = document.getElementById('chat_list'); // Укажите id уникального элемента
-    if (uniqueElement) {
-        UpdateChatList();
-    }
-});
-
 async function UpdateChatList(){
     let chat_list = document.getElementById('chat_list');
     try {
         const response = await fetch('/upd_chat_list');
         if (!response.ok) {
-            throw new Error('Ошибка при загрузке чата');
+            throw new Error('Ошибка при загрузке чата листа');
         }
         const data = await response.text(); 
         chat_list.innerHTML = data;
@@ -339,13 +308,6 @@ async function UpdateChatList(){
 }
 
 // Update Chat Messages
-document.addEventListener('DOMContentLoaded', function () {
-    const uniqueElement = document.getElementById('messages'); 
-    if (uniqueElement) {
-        UpdateChatMessages();
-    }
-});
-
 async function UpdateChatMessages(){
     let messages = document.getElementById('messages');
     try {
@@ -353,39 +315,24 @@ async function UpdateChatMessages(){
         if (!response.ok) {
             throw new Error('Ошибка при загрузке сообщений');
         }
-        const data = await response.text(); // Ожидаем HTML от сервера
+        const data = await response.text(); 
         messages.innerHTML = data;
-        // await new Promise(resolve => setTimeout(resolve, 1));
         messages.scrollTop = messages.scrollHeight;
-        console.log(messages.scrollHeight, messages.clientHeight);
     } catch (error) {
         console.error('Ошибка:', error);
         messages.innerHTML = `<p>${error}</p>`;
     }
-    // setTimeout(scrollChat, 1000);
-    // requestAnimationFrame(() => {
-    //     messages.scrollTop = messages.scrollHeight;
-    //     console.log(messages.scrollHeight)
-    // });
 }
 
-
 // Update Chat Header
-document.addEventListener('DOMContentLoaded', function () {
-    const uniqueElement = document.getElementById('chat_header'); 
-    if (uniqueElement) {
-        UpdateChatHeader();
-    }
-});
-
 async function UpdateChatHeader(){
     let chat_header = document.getElementById('chat_header');
     try {
         const response = await fetch('/upd_chat_header');
         if (!response.ok) {
-            throw new Error('Ошибка при загрузке сообщений');
+            throw new Error('Ошибка при загрузке заголовка');
         }
-        const data = await response.text(); // Ожидаем HTML от сервера
+        const data = await response.text(); 
         chat_header.innerHTML = data;
     } catch (error) {
         console.error('Ошибка:', error);

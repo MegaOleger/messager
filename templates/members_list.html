@@ -1,0 +1,26 @@
+{% if members %}
+    <p style="margin-top: 10px; margin-bottom: 25px; font-size: 20px">Members: {{ cnt_members }}</p>
+    {% for member in members %}
+        {% if member[0] == user_id %}
+            <a href="/settings" class="member" id="{{ member[0] }}" tabindex="0">
+                <div class="member-avatar">
+                    <img class="avatar-image" src="../static/images/avatars/{{ member[4] }}" alt="">
+                </div>
+                <div class="member-name">
+                    <p class="info" style="margin-right: 15px;">{{ member[1] }} {{ member[2] }}</p>
+                    <p class="info">@{{ member[3] }}</p>
+                </div>                        
+            </a>
+        {% elif member[0] != user_id %}
+            <a href="/open_chat_preview/{{ member[0] }}" class="member" id="{{ member[0] }}" tabindex="0">
+                <div class="member-avatar">
+                    <img class="avatar-image" src="../static/images/avatars/{{ member[4] }}" alt="">
+                </div>
+                <div class="member-name">
+                    <p class="info" style="margin-right: 15px;">{{ member[1] }} {{ member[2] }}</p>
+                    <p class="info">@{{ member[3] }}</p>
+                </div>                        
+            </a>
+        {% endif %}
+    {% endfor %}
+{% endif %}
