@@ -234,7 +234,7 @@ def reset_edit():
 def session_edit(**kwargs):
     if not kwargs:
         login = session.get("login")
-        username, name, lastname, bday, avatar, bio, user_id = sql.select_info(login)
+        user_id, username, name, lastname, bday, avatar, bio = sql.select_info(login)
         if avatar is None:
             avatar = "default_avatar.jpg"
         if username is None:

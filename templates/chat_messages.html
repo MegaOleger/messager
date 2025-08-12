@@ -4,13 +4,13 @@
     {% if chat[6] == 2 %} <!--if you blocked -->
         <div class="chat_blocked">You have blocked this chat</div>
     {% elif chat[6] == 1 or chat[6] == None %} <!--if you didn't block -->
-        {% if list_messages %}
-            {% for date in list_messages.keys() %}
+        {% if messages %}
+            {% for date in messages.keys() %}
                 <div class="date" id="{{ date }}">
                     <p class="datestamp">{{ date }}</p>
                     <hr style="margin-bottom: 15px; width: 80%; border: 2px dashed #484848; border-radius: 5px; ">
-                    {% for msg in list_messages[date] %}
-                        {% if msg["owner"] == False %}
+                    {% for msg in messages[date] %}
+                        {% if msg["user_id"] != user_id %}
                             <div class="message-avatar"><img src="../static/images/avatars/{{msg['avatar']}}" class="avatar-img"></div>
                             <div class="message-left message" id="message" data-message-id="{{ msg['message_id'] }}" data-username="{{ msg['username'] }}">
                                 <div class="message-body">
@@ -21,7 +21,7 @@
                                     </div>                                
                                 </div>                          
                             </div>
-                        {% elif msg["owner"] == True %}
+                        {% elif msg["user_id"] == user_id %}
                             <div class="message-right message" id="message" data-message-id="{{ msg['message_id'] }}"  data-username="{{ msg['username'] }}">
                                 <div class="message-body">
                                     <div class="message-body-text">{{ msg["message"] }}</div>
