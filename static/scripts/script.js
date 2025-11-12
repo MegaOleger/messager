@@ -2,6 +2,68 @@
 
 document.addEventListener('contextmenu', event => event.preventDefault())
 
+// websocket
+const socket = io({ transports: ['websocket'], alwaysConnect: true });
+document.getElementById('btn_send').addEventListener('click', () => {
+    console.log('btn_send')
+    const message = document.getElementById('resizeTextarea').value;
+    if (message) {
+        console.log(message)
+        socket.emit('message', message);
+        let reply_msg = document.getElementById("reply_msg");
+        console.log('reply_msg: ', reply_msg);
+        var reply_msg_id = reply_msg.dataset.messageId;
+        console.log('reply_msg_id: ', reply_msg_id);
+
+        fetch('/message', {
+            method: 'POST',
+            headers: {
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                msg: message,
+                reply_id: reply_msg_id
+            }),
+            // body: new URLSearchParams({ message }),
+        })
+        .then((response) => {
+            if (!response.ok) {
+                console.error('Failed to send message through HTTP:', response.statusText);
+            }
+        })
+        .catch((error) => {
+            console.error('HTTP error:', error);
+        });
+        document.getElementById('resizeTextarea').value = ''; 
+        console.log('Message: ', message)
+        
+    } 
+});
+
+socket.on('/message', (msg) => {
+    window.location.reload();
+    console.log('message')
+    // console.log('MSG: ', msg);
+});
+
+socket.on('edit_message', () => {
+    window.location.reload();
+    console.log('edit_message')
+    // console.log("msg: ", msg)
+});
+
+socket.on('chat_action', () => {
+    window.location.reload();
+    console.log('chat_action')
+});
+
+socket.on('new_message', () => {
+    window.location.reload();
+    console.log('new_message')
+})
+
+
 // more
 var side_panel_displayed = false;
 const panel = document.getElementById("panel");
@@ -25,8 +87,6 @@ document.addEventListener("click", function(event) {
 
 // setting
 var setting_panel_displayed = false;
-const setting_panel = document.getElementById("setting_panel");
-const btn_panel_dots = document.getElementById("btn_panel_dots"); 
 function display_setting_panel(){
     if (setting_panel_displayed){
         setting_panel_displayed = false;
@@ -38,7 +98,7 @@ function display_setting_panel(){
     }
 }
 document.addEventListener("click", function(event) {
-    if (!setting_panel.contains(event.target) && !btn_panel_dots.contains(event.target)) {
+    if (setting_panel_displayed && !setting_panel.contains(event.target) && !btn_panel_dots.contains(event.target)) {
         setting_panel.style.display = "none";
         setting_panel_displayed = false;
     }
@@ -198,62 +258,6 @@ async function copyCode(){
 }
 
 
-// websocket
-// const socket = io({ transports: ['websocket'], alwaysConnect: true });
-// document.getElementById('btn_send').addEventListener('click', () => {
-//     const message = document.getElementById('resizeTextarea').value;
-//     if (message) {
-//         socket.emit('message', message);
-//         fetch('/message', {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/x-www-form-urlencoded',
-//             },
-//             body: new URLSearchParams({ message }),
-//         })
-//         .then((response) => {
-//             if (!response.ok) {
-//                 console.error('Failed to send message through HTTP:', response.statusText);
-//             }
-//         })
-//         .catch((error) => {
-//             console.error('HTTP error:', error);
-//         });
-//         document.getElementById('resizeTextarea').value = ''; 
-//         console.log('Message: ', message)
-//     }
-// });
-
-// socket.on('new_message', (msg) => {
-//     window.location.reload();
-//     console.log('MSG: ', msg);
-// });
-
-// // chat_state
-// socket.on('chat_action', () => {
-//     window.location.reload();
-//     // console.log('STATE: ', state)
-// })
-
-// scroll chat
-// const observer = new MutationObserver(mutations => scrollChat);
-// const messages = document.getElementById("messages");
-// observer.observe(messages, {
-//     attributes: true, 
-//     childList: true,      
-//     characterData: true,
-//     subtree: true
-// });
-
-// function scrollChat(){
-//     let messages = document.getElementById("messages");
-//     console.log("1 Scroll True");
-//     console.log(messages.scrollHeight);
-//     messages.scrollTop = messages.scrollHeight;
-//     console.log(messages.scrollHeight);
-//     console.log("2 Scroll True");   
-// }
-
 // display_chat_menu
 var side_chat_menu_displayed = false;
 const btn_chat_menu = document.getElementById("btn_chat_menu"); 
@@ -270,7 +274,7 @@ function display_chat_menu(){
     }
 }
 document.addEventListener("click", function(event) {
-    if (!chat_menu.contains(event.target) && !btn_chat_menu.contains(event.target)) {
+    if (side_chat_menu_displayed && !chat_menu.contains(event.target) && !btn_chat_menu.contains(event.target)) {
         chat_menu.style.display = "none";
         side_chat_menu_displayed = false;
     }
@@ -282,7 +286,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let messages = document.getElementById('messages'); 
     let chat_list = document.getElementById('chat_list');
     let members_list = document.getElementById('members_list'); 
+    const setting_panel = document.getElementById("setting_panel");
+    const btn_panel_dots = document.getElementById("btn_panel_dots"); 
 
+    
     if (chat_header) {UpdateChatHeader();}
     if (messages) {UpdateChatMessages();}
     if (chat_list) {UpdateChatList();}
@@ -317,7 +324,7 @@ async function UpdateChatMessages(){
         }
         const data = await response.text(); 
         messages.innerHTML = data;
-        messages.scrollTop = messages.scrollHeight;
+        // messages.scrollTop = messages.scrollHeight;
     } catch (error) {
         console.error('Ошибка:', error);
         messages.innerHTML = `<p>${error}</p>`;
@@ -343,27 +350,28 @@ async function UpdateChatHeader(){
 // search chat
 const search_chat = document.getElementById('search_chat');
 if (search_chat){
-search_chat.addEventListener('input', async () => {
-    let input_chat = search_chat.value;
-    let names_chats = []
-    let chats = document.getElementsByClassName('body-element')
-    for (const i of chats){
-        let chat_name = i.querySelector(".chat-list-body-element-name")
-        let chat_id = i.id;
-        let name = chat_name.innerText;
-        names_chats.push({[chat_id]: name})
-    }
-    for (let i=0; i<names_chats.length; i++){
-        const [[key, value]] = Object.entries(names_chats[i]);
-        if (!value.toLowerCase().includes(input_chat.toLowerCase())){
-            document.getElementById(key).style.display = "none";
+    search_chat.addEventListener('input', async () => {
+        let input_chat = search_chat.value;
+        let names_chats = []
+        let chats = document.getElementsByClassName('body-element')
+        for (const i of chats){
+            let chat_name = i.querySelector(".chat-list-body-element-name")
+            let chat_id = i.id;
+            let name = chat_name.innerText;
+            names_chats.push({[chat_id]: name})
         }
-        else if (value.toLowerCase().includes(input_chat.toLowerCase())){
-            document.getElementById(key).style.display = "flex";
+        for (let i=0; i<names_chats.length; i++){
+            const [[key, value]] = Object.entries(names_chats[i]);
+            if (!value.toLowerCase().includes(input_chat.toLowerCase())){
+                document.getElementById(key).style.display = "none";
+            }
+            else if (value.toLowerCase().includes(input_chat.toLowerCase())){
+                document.getElementById(key).style.display = "flex";
+            }
         }
-    }
-})
+    })
 }
+
 
 //display search message
 var side_search_msg_displayed = false;
@@ -423,6 +431,23 @@ function display_search_msg(){
                         const elem = document.createElement('a');
                         elem.classList.add('searched_msg');
                         elem.setAttribute('id', `search_${msg_id}`);
+                        elem.addEventListener("click", () => {
+                            // console.log('move');
+                            let message_id = document.querySelector(`[data-message-id="${msg_id}"]`);
+                            // console.log('msg_id: ', msg_id);
+                            // console.log('message_id: ', message_id);
+                            message_id.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center"
+                            });
+                            const oldColor = message_id.style.backgroundColor;
+                            message_id.style.transition = "background-color 0.5s ease";
+                            message_id.style.backgroundColor = "lightgray";
+                            setTimeout(() => {
+                                message_id.style.backgroundColor = oldColor;
+                            }, 500);
+                        });
+ 
                         msges_area.appendChild(elem);
 
                         // avatar
@@ -472,54 +497,117 @@ function display_search_msg(){
     }
 }
 document.addEventListener("click", function(event) {
-    if (!search_msg.contains(event.target) && !btn_display_search_msg.contains(event.target)) {
+    if (side_search_msg_displayed && !search_msg.contains(event.target) && !btn_display_search_msg.contains(event.target)) {
         search_msg.style.display = "none";
         side_search_msg_displayed = false;
     }
 });
 
+function ScrollToReplyMsg(msg_id){
+    // console.log(msg_id)
+    msg = document.querySelector(`[data-message-id="${msg_id}"]`);
+    // console.log("msg: ", msg);
+    msg.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+    const oldColor = msg.style.backgroundColor;
+    msg.style.transition = "background-color 1s ease";
+    msg.style.backgroundColor = "gray";
+    setTimeout(() => {
+        msg.style.backgroundColor = oldColor;
+    }, 500);
+}
+
+function OpenChatPreview(sender){
+    console.log('sender: ', sender);
+    fetch(`/open_forwarded_profile/${sender}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then((response) => {
+        if (!response.ok) {
+            console.error('Failed to send id through HTTP:', response.statusText);
+        }
+        location.reload();
+    })
+    .catch((error) => {
+        console.error('HTTP error:', error);
+    });
+}
+
 // right click message panel
 let currentMessageId = null;
 const messagePanel_user = document.getElementById("message_panel_user");
 const messagePanel_friend = document.getElementById("message_panel_friend");
+const messagePanel_user_forwarded = document.getElementById("message_panel_user_forwarded");
+var messageElement_user = null;
+
+function positionPanel(panel, event) {
+    const panelRect = panel.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    const footer = document.querySelector('.chat-footer');
+    const footerRect = footer ? footer.getBoundingClientRect() : null;
+    const footerTop = footerRect ? footerRect.top : viewportHeight;
+
+    let x = Math.min(event.clientX, viewportWidth - panelRect.width - 5);
+    
+    let y;
+    const spaceBelow = footerTop - (event.clientY + panelRect.height + 10);
+    const spaceAbove = event.clientY - panelRect.height - 10;
+
+    if (spaceBelow < 0 && spaceAbove >= 0) {
+        y = Math.max(event.clientY - panelRect.height - 5, 5);
+    } else if (spaceBelow >= 0) {
+        y = Math.min(event.clientY, viewportHeight - panelRect.height - 5);
+    } else {
+        y = 5;
+    }
+    
+    panel.style.left = `${x}px`;
+    panel.style.top = `${y}px`;
+}
+
 
 // Handler for all messages
 document.addEventListener('contextmenu', function(event) {
-    const messageElement_user = event.target.closest('.message-right');
+    messageElement_user = event.target.closest('.message-right');
     if (!messageElement_user) return;
-    
-    event.preventDefault();
-    // currentMessageId = messageElement_user.dataset.messageId;
-    // const messageBodyText = messageElement_user.querySelector('.message-body-text');
-    // var MessageText = messageBodyText ? messageBodyText.innerText : '';
-    // console.log('MessageText: ', MessageText)
+    if (messageElement_user.querySelector('.forward-orig_sender')) {
 
-    // Panel positioning
-    var x = Math.min(event.clientX, window.innerWidth - messagePanel_user.offsetWidth - 5);
-    var y = Math.min(event.clientY, window.innerHeight - messagePanel_user.offsetHeight - 5);
-    
-    messagePanel_user.style.display = "flex";
-    messagePanel_user.style.left = `${x}px`;
-    messagePanel_user.style.top = `${y}px`;
+        event.preventDefault();
+
+        messagePanel_user_forwarded.style.display = "flex";
+        messagePanel_user_forwarded.style.position = "absolute";
+        positionPanel(messagePanel_user_forwarded, event);
+        
+    }
+    else if (messageElement_user.querySelector('.message-body')) {
+        
+        event.preventDefault();
+
+        messagePanel_user.style.display = "flex";
+        messagePanel_user.style.position = "absolute";
+        positionPanel(messagePanel_user, event);
+
+    }
 });
 
+var messageElement_friend = null;
 document.addEventListener('contextmenu', function(event) {
-    const messageElement_friend = event.target.closest('.message-left');
+    messageElement_friend = event.target.closest('.message-left');
     if (!messageElement_friend) return;
     
     event.preventDefault();
-    // currentMessageId = messageElement_friend.dataset.messageId;
-    // const messageBodyText = messageElement_friend.querySelector('.message-body-text');
-    // var MessageText = messageBodyText ? messageBodyText.innerText : '';
-    // console.log('MessageText: ', MessageText)
 
-    // Panel positioning
-    var x = Math.min(event.clientX, window.innerWidth - messagePanel_friend.offsetWidth - 5);
-    var y = Math.min(event.clientY, window.innerHeight - messagePanel_friend.offsetHeight - 5);
-    
     messagePanel_friend.style.display = "flex";
-    messagePanel_friend.style.left = `${x}px`;
-    messagePanel_friend.style.top = `${y}px`;
+    messagePanel_friend.style.position = "absolute";
+    positionPanel(messagePanel_friend, event);
+
 });
 
 // Closing when clicked outside the panel
@@ -530,6 +618,10 @@ document.addEventListener('click', function(event) {
     if (!messagePanel_friend.contains(event.target)) {
         messagePanel_friend.style.display = "none";
     } 
+    if (!messagePanel_user_forwarded.contains(event.target)){
+        messagePanel_user_forwarded.style.display = "none";
+
+    }
 });
 
 // Handlers for menu buttons
@@ -551,13 +643,31 @@ if (messagePanel_user){
     });
 }
 
+if (messagePanel_user_forwarded){
+    messagePanel_user_forwarded.addEventListener('click', function(event) {
+        const button = event.target.closest('.msg_menu-btn');
+        if (!button) return;
+        
+        const action = button.dataset.action;
+        console.log('action: ', action)
+        console.log('msg: ', messageElement_user)
+        executeMenuAction(action, messageElement_user);
+        messagePanel_user_forwarded.style.display = "none";
+    });
+    
+    // Closing when the cursor leaves
+    messagePanel_user_forwarded.addEventListener('mouseleave', function() {
+        messagePanel_user_forwarded.style.display = "none";
+    });
+}
+
 if (messagePanel_friend){
     messagePanel_friend.addEventListener('click', function(event) {
         const button = event.target.closest('.msg_menu-btn');
         if (!button) return;
         
         const action = button.dataset.action;
-        executeMenuAction(action, messageElement_user);
+        executeMenuAction(action, messageElement_friend);
         messagePanel_friend.style.display = "none";
     });
     
@@ -572,47 +682,64 @@ if (messagePanel_friend){
 function executeMenuAction(action, msg) {
     console.log('act: ', action)
     console.log('msg: ', msg)
+    let msg_txt = msg.getElementsByClassName('message-body-text')[0].innerText;
+    let msg_id = msg.dataset.messageId
+    let msg_username = msg.dataset.username
     switch(action) {
         case 'copy':
-            console.log('COPY')
-            copyMessage(msg);
+            navigator.clipboard.writeText(msg_txt);
             break;
         case 'reply':
-            replyMessage(msg);
+            replyMessage(msg_txt, msg_username, msg_id);
             break;
         case 'forward':
-            forwardMessage(msg);
+            forwardMessage(msg_txt, msg_username);
             break;
         case 'edit':
-            editMessage(msg);
+            editMessage(msg_txt, msg_id);
             break;
         case 'delete':
-            deleteMessage(msg);
+            deleteMessage(msg_id);
             break;
     }
-    // console.log(`Action: ${action}, Message ID: ${messageId}`);
 }
 
-function copyMessage(id) { 
-    console.log('COPPPYYY')
-    // const messageBodyText = messageElement_user.querySelector('.message-body-text');
-    var MessageText = messageBodyText ? messageBodyText.innerText : '';
-    console.log('MessageText: ', MessageText)
-    navigator.clipboard.writeText(MessageText)
+function replyMessage(msg_txt, msg_username, msg_id) { 
+    console.log('reply');
+    display_reply_box(msg_txt, msg_username, msg_id);
 }
-function replyMessage(id) { 
+let forwardMessageData = null;
+function forwardMessage(msg_txt, msg_username) { 
+    console.log('forward');
+    forwardMessageData = {
+        text: msg_txt,
+        username: msg_username
+    };
+    display_forward_box();
+}
 
+function editMessage(msg_txt, id) { 
+    // console.log(msg_txt, id);
+    textarea.innerHTML = msg_txt;
+    display_edit_box(msg_txt, id);
 }
-function forwardMessage(id) { 
 
-}
-function editMessage(id) { 
-    fetch(`/edit_message/${id}`, {
+const btn_edit = document.getElementById("btn_edit");
+var edit = document.getElementById("edit");
+btn_edit.addEventListener("click", function() {
+    let msg = textarea.value;
+    let msg_id = edit.dataset.messageId;
+    // console.log('msg: ', msg);
+    // console.log('msg_id: ', msg_id);
+    fetch(`/edit_msg`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
         },
-        body: new URLSearchParams({ id }),
+        body: JSON.stringify({
+            id: msg_id,
+            text: msg
+        }),
     })
     .then((response) => {
         if (!response.ok) {
@@ -622,21 +749,344 @@ function editMessage(id) {
     .catch((error) => {
         console.error('HTTP error:', error);
     });
-}
+    
+})
+
+
 function deleteMessage(id) {
-    fetch(`/delete_message/${id}`, {
-        method: 'POST',
+    fetch(`/delete_msg/${id}`, {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ id }),
+        }
     })
     .then((response) => {
         if (!response.ok) {
             console.error('Failed to send id through HTTP:', response.statusText);
         }
+        location.reload();
     })
     .catch((error) => {
         console.error('HTTP error:', error);
+    });
+
+}
+
+
+// display reply box
+var side_reply_box_displayed = false;
+const btn_close_reply = document.getElementById("close_reply");
+let reply = document.getElementById("reply");
+
+function display_reply_box(msg_txt, msg_username, msg_id){
+    var footer_block_menu = document.getElementsByClassName('chat-footer-block_menu')[0]
+    console.log('reply: ', footer_block_menu);
+    if (side_reply_box_displayed){
+        side_reply_box_displayed = false;
+        footer_block_menu.style.display = "none";
+        reply.style.display = "none";
+    }
+    else if (!side_edit_box_displayed){
+        side_reply_box_displayed = true;
+        footer_block_menu.style.display = "flex";
+        reply.style.display = "inline-flex";
+        reply_friend = document.getElementById("reply_friend");
+        let reply_msg = document.getElementById("reply_msg");
+        reply_msg.innerHTML = msg_txt;
+        reply_msg.dataset.messageId = msg_id;
+        friend_name = msg_username;
+        // console.log('friend_name: ', friend_name);
+        reply_friend.innerHTML = `Reply to ${friend_name}`;
+    }
+}
+btn_close_reply.addEventListener("click", function() {
+    reply.style.display = "none";
+    footer_block_menu.style.display = "none";
+    side_reply_box_displayed = false;
+});
+document.addEventListener("click", function(event) {
+    if (side_reply_box_displayed && !reply.contains(event.target) && btn_close_reply.contains(event.target)) {
+        reply.style.display = "none";
+        footer_block_menu.style.display = "none";
+        side_reply_box_displayed = false;
+    }
+});
+
+// reply cont
+async function fill_in_reply_cont(){
+    let messages = document.getElementsByClassName('message')
+    // console.log('messages: ', messages);
+    // console.log('messages.length: ', messages.length);
+    for (let msg of messages){
+        var msg_id = msg.dataset.messageId;
+        var reply_cont = document.getElementsByClassName('reply_cont');
+
+        for (let reply of reply_cont){
+            if (msg_id == reply.dataset.messageId){
+                var reply_txt = document.getElementById('reply_txt_${{ msg_id }}');
+                // console.log('reply_txt: ', reply_txt);
+                var reply_friend = document.getElementById('reply_friend_${{ msg_id }}');
+                // console.log('reply_friend: ', reply_friend);
+                reply_friend.innerHTML = msg.dataset.username;
+                reply_txt.innerHTML = msg.getElementsByClassName('message-body-text')[0].innerText;
+            }
+        }
+    }
+}
+
+
+// display forward box
+var side_forward_box_displayed = false;
+var forward = document.getElementById("forward");
+const btn_close_forward = document.getElementById("close_forward");
+function display_forward_box(){
+    if (side_forward_box_displayed){
+        side_forward_box_displayed = false;
+        forward.style.display = "none";
+        forwardMessageData = null;
+    }
+    else{
+        side_forward_box_displayed = true;
+        forward.style.display = "flex";
+        UpdateChatListForward();
+    }
+}
+btn_close_forward.addEventListener("click", function() {
+    forward.style.display = "none";
+    side_forward_box_displayed = false;
+});
+document.addEventListener("click", function(event) {
+    if (side_forward_box_displayed && !forward.contains(event.target) && btn_close_forward.contains(event.target)) {
+        forward.style.display = "none";
+        side_forward_box_displayed = false;
+    }
+});
+
+// Update Chat List Forward
+async function UpdateChatListForward(){
+    let list_forward = document.getElementById('list_forward');
+    // console.log("list: ", forward);
+    try {
+        const response = await fetch('/upd_chat_list_forward');
+        if (!response.ok) {
+            throw new Error('Ошибка при загрузке чата листа');
+        }
+        const data = await response.text(); 
+        list_forward.innerHTML = data;
+    
+        // Инициализируем чекбоксы после загрузки, передавая текущие данные
+        setTimeout(() => initializeForwardCheckboxes(forwardMessageData), 100);
+        console.log("DATA loaded successfully");
+    } catch (error) {
+        console.error('Ошибка:', error);
+        list_forward.innerHTML = `<p>${error}</p>`;
+    }
+}
+
+
+// search chat forward
+const input_forward = document.getElementById('input_forward');
+if (input_forward){
+    input_forward.addEventListener('input', async () => {
+        let input_chat = input_forward.value;
+        let names_chats = [];
+        let chats = document.getElementsByClassName('body-element_fw');
+        console.log("chats: ", chats);
+        
+        for (const i of chats){
+            let chat_name = i.querySelector(".chat-list-body-element-name_fw");
+            console.log('chat_name: ', chat_name);
+            let chat_id = i.id;
+            let name = chat_name.innerText;
+            names_chats.push({[chat_id]: name});
+        }
+        console.log("names_chats: ", names_chats);
+        for (let i=0; i<names_chats.length; i++){
+            const [[key, value]] = Object.entries(names_chats[i]);
+            if (!value.toLowerCase().includes(input_chat.toLowerCase())){
+                document.getElementById(key).style.display = "none";
+            }
+            else if (value.toLowerCase().includes(input_chat.toLowerCase())){
+                document.getElementById(key).style.display = "flex";
+            }
+        }
+    })
+}
+
+// display edit box
+var side_edit_box_displayed = false;
+const btn_close_edit = document.getElementById("close_edit");
+const btn_send = document.getElementById("btn_send");
+
+
+function display_edit_box(msg_txt, id){
+    var footer_block_menu = document.getElementsByClassName('chat-footer-block_menu')[0]
+    console.log('edit: ', footer_block_menu)
+    if (side_edit_box_displayed){
+        side_edit_box_displayed = false;
+        footer_block_menu.style.display = "none";
+        edit.style.display = "none";
+        btn_send.style.display = "flex";
+        btn_edit.style.display = "none";
+    }
+    else if (!side_reply_box_displayed){
+        side_edit_box_displayed = true;
+        footer_block_menu.style.display = "flex";
+        edit.style.display = "inline-flex";
+        console.log("ID: ", id);
+        edit.dataset.messageId = id;
+        console.log("message_id: ", edit.dataset.messageId);
+        btn_send.style.display = "none";
+        btn_edit.style.display = "flex";
+        edit_msg = document.getElementById("edit_msg");
+        edit_msg.innerHTML = msg_txt;
+    }
+}
+btn_close_edit.addEventListener("click", function() {
+    side_edit_box_displayed = false;
+    footer_block_menu.style.display = "none";
+    edit.style.display = "none";
+    btn_send.style.display = "flex";
+    btn_edit.style.display = "none";
+    textarea.innerHTML = "";
+});
+document.addEventListener("click", function(event) {
+    if (side_edit_box_displayed && !edit.contains(event.target) && btn_close_edit.contains(event.target)) {
+        side_edit_box_displayed = false;
+        footer_block_menu.style.display = "none";
+        edit.style.display = "none";
+        btn_send.style.display = "flex";
+        btn_edit.style.display = "none";
+    }
+});
+
+// made block reply
+const container = document.getElementById("messages");
+const observer = new MutationObserver(() => {
+    const messages = container.getElementsByClassName("message");
+    
+    for (let msg of messages){
+        var msg_id = msg.dataset.messageId;
+        var username = msg.dataset.username;
+        // console.log('Elements:', msg.getElementsByClassName('message-body-text'));
+        if (msg.getElementsByClassName('message-body-text')){
+            var txt = msg.getElementsByClassName('message-body-text')[0].innerText;
+            
+            const reply_elements = document.querySelectorAll(`[data-message-id="${msg_id}"]`);
+            
+            if (reply_elements.length > 1){
+                for (let i=1; i<reply_elements.length; i++){
+                    let reply_friend = document.createElement('p');
+                    let reply_txt = document.createElement('p');
+                    reply_friend.innerText = username;
+                    reply_txt.innerText = txt;
+                    reply_elements[i].appendChild(reply_friend);
+                    reply_elements[i].appendChild(reply_txt);
+                }
+            }
+        }
+    }
+    msges = document.getElementById('messages');
+    msges.scrollTop = msges.scrollHeight;
+});
+ 
+observer.observe(container, { childList: true});
+
+
+// Иницилизация чек боксов
+function initializeForwardCheckboxes(messageData) {
+    const checkboxes = document.querySelectorAll('.chat-checkbox');
+    const sendBtn = document.getElementById('send_forward_btn');
+    
+    // Сбрасываем предыдущее состояние
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        const chatElement = checkbox.closest('.body-element_fw');
+        chatElement.classList.remove('selected');
+    });
+    sendBtn.style.display = 'none';
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const chatElement = this.closest('.body-element_fw');
+            if (this.checked) {
+                chatElement.classList.add('selected');
+            } else {
+                chatElement.classList.remove('selected');
+            }
+            
+            // Показываем/скрываем кнопку отправки
+            const selectedChats = document.querySelectorAll('.chat-checkbox:checked');
+            sendBtn.style.display = selectedChats.length > 0 ? 'flex' : 'none';
+        });
+    });
+    
+    // Обработчик кнопки отправки
+    sendBtn.addEventListener('click', function() {
+        const selectedChats = document.querySelectorAll('.chat-checkbox:checked');
+        const chatIds = Array.from(selectedChats).map(checkbox => checkbox.dataset.chatId);
+        
+        console.log('Selected chats:', chatIds);
+        console.log('Message data:', messageData);
+        
+        if (chatIds.length > 0 && messageData) {
+            sendForwardMessage(chatIds, messageData);
+        } else {
+            console.error('No chats selected or no message data');
+            if (!messageData) {
+                console.error('forwardMessageData is null or undefined');
+            }
+        }
+    });
+}
+
+// Функция отправки пересланного сообщения
+function sendForwardMessage(chatIds, messageData) {
+    console.log('Sending forward message to chats:', chatIds);
+    console.log('Message data:', messageData);
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    // Отправляем каждому выбранному чату
+    const promises = chatIds.map(chatId => {
+        return fetch('/forward_msg', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                target_chat_id: chatId,
+                orig_sender: messageData.username,
+                msg: messageData.text
+            }),
+        })
+        .then(response => {
+            if (response.ok || response.redirected) {
+                successCount++;
+                console.log(`Successfully forwarded to chat ${chatId}`);
+                return response.json();
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error forwarding message to chat', chatId, ':', error);
+            errorCount++;
+            return { error: error.message, chatId: chatId };
+        });
+    });
+    
+    // Ждем завершения всех запросов
+    Promise.all(promises).then(() => {
+        // Закрываем окно пересылки
+        const forward = document.getElementById("forward");
+        forward.style.display = "none";
+        side_forward_box_displayed = false;
+        
+        forwardMessageData = null;
+        
+        // Обновляем чат, если нужно
+        // UpdateChatMessages();
     });
 }

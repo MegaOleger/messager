@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, and_, case
 from .models import (
     User, Password, Chat, Member, Role, ChatState, ChatType,
     EntryType, MessageContentState, MessageState, MessageEntry
@@ -49,6 +49,14 @@ def get_user_info_by_id(user_id: int):
         'bio': u.bio
     }
 
+def get_user_id_by_username(username: str):
+    u = User.query.filter_by(username=username).first()
+    if not u:
+        return None
+    return {
+        "id": u.id
+    }
+
 def create_user(login: str, name: str, lastname: str, bday,
                 password_text: str, avatar: str = None, bio: str = None):
     if not all([login, name, lastname, bday, password_text]):
@@ -78,7 +86,6 @@ def check_username(username: str):
 
 def get_password(login: str):
     u = User.query.filter_by(login=login).first()
-    print('get_password: ', u.passwords)
     if not u or not u.passwords:
         return None
     return u.passwords[0].password
@@ -159,7 +166,7 @@ def get_chat_inf(target: str, chat_id: int):
     }
     return mapping.get(target)
 
-def join_group(chat_id: int, user_id: int, role_id: int, chat_state_id: int = 1):
+def db_join_group(chat_id: int, user_id: int, role_id: int, chat_state_id: int = 1):
     member = Member(
         chat_id=chat_id,
         user_id=user_id,
@@ -170,7 +177,7 @@ def join_group(chat_id: int, user_id: int, role_id: int, chat_state_id: int = 1)
     db.session.commit()
     return True
 
-def leave_chat(chat_id: int, user_id: int):
+def db_leave_chat(chat_id: int, user_id: int):
     Member.query.filter_by(chat_id=chat_id, user_id=user_id).delete()
     db.session.commit()
     return True
@@ -196,8 +203,35 @@ def save_message(message: str, type_id: int, timestamp: datetime,
     db.session.commit()
     return entry.id
 
+def edit_message(msg_id: int, msg_txt: str):
+    entry = MessageEntry.query.filter_by(id=msg_id).first()
+    if not entry:
+        return False
+    entry.message = msg_txt
+    entry.content_state_id = 2
+    db.session.commit()
+    return True
+
+def forward_message(msg_id, orig_sender:str):
+    entry = MessageEntry.query.filter_by(id=msg_id).first()
+    if not entry:
+        return False
+    entry.orig_sender = orig_sender
+    db.session.commit()
+
+def reply_message(msg_id, reply_id:int):
+    entry = MessageEntry.query.filter_by(id=msg_id).first()
+    if not entry:
+        return False
+    entry.reply_id = reply_id
+    db.session.commit()
+
 def delete_message(msg_id: int):
-    MessageEntry.query.filter_by(id=msg_id).delete()
+    entry = MessageEntry.query.filter_by(id=msg_id).first()
+    if not entry:
+        return False
+    entry.deleted_status = 2
+    entry.deleted_timestamp = datetime.now()
     db.session.commit()
     return True
 
@@ -207,7 +241,8 @@ def get_base_messages(chat_id: int):
     ).join(Member, MessageEntry.member_id == Member.id
     ).join(User, Member.user_id == User.id
     ).join(Chat, MessageEntry.chat_id == Chat.id
-    ).filter(MessageEntry.chat_id == chat_id)
+    ).filter(and_(MessageEntry.chat_id == chat_id, MessageEntry.deleted_status == 1)
+    ).order_by(MessageEntry.timestamp).all()
 
     result = []
     for e in rows:
@@ -225,54 +260,118 @@ def get_base_messages(chat_id: int):
             'content_state_id': me.content_state_id,
             'chat_type_id': ch.type_id,
             'avatar': us.avatar,
-            'username': us.username
+            'username': us.username,
+            'reply_id' : me.reply_id,
+            'orig_sender' : me.orig_sender
         })
+    # print('result: ', result)
     return result
 
-def get_chat_list(user_id: int):
-    # print('chat_list user_id: ', user_id)
-    subq = db.session.query(
+def get_chat_list(user_id: int):    
+    last_msg_subq = db.session.query(
         MessageEntry.chat_id,
+        MessageEntry.member_id,
+        MessageEntry.message,
         func.max(MessageEntry.timestamp).label('last_ts')
-    ).group_by(MessageEntry.chat_id).subquery()
+    ).filter(MessageEntry.deleted_status == 1
+    ).group_by(MessageEntry.chat_id, MessageEntry.member_id, MessageEntry.message
+    ).subquery()
+
+    max_ts_subq = db.session.query(
+        last_msg_subq.c.chat_id,
+        func.max(last_msg_subq.c.last_ts).label('max_ts')
+    ).group_by(last_msg_subq.c.chat_id
+    ).subquery()
+
+    last_msgs_with_sender = db.session.query(
+        last_msg_subq.c.chat_id,
+        last_msg_subq.c.message,
+        last_msg_subq.c.last_ts,
+        User.name.label('sender_name')
+    ).join(max_ts_subq,
+           (last_msg_subq.c.chat_id == max_ts_subq.c.chat_id) &
+           (last_msg_subq.c.last_ts == max_ts_subq.c.max_ts)
+    ).join(Member, last_msg_subq.c.member_id == Member.id
+    ).join(User, Member.user_id == User.id
+    ).subquery()
 
     q = db.session.query(
         Member.chat_id,
         Chat.chat_name,
         Chat.type_id,
+        Chat.avatar,
         Member.chat_state_id,
         Member.role_id,
-        MessageEntry.message,
-        subq.c.last_ts
+        last_msgs_with_sender.c.message,
+        last_msgs_with_sender.c.last_ts,
+        last_msgs_with_sender.c.sender_name
     ).join(Chat, Member.chat_id == Chat.id
-    ).join(subq, Member.chat_id == subq.c.chat_id
-    ).join(MessageEntry,
-           (MessageEntry.chat_id == subq.c.chat_id) &
-           (MessageEntry.timestamp == subq.c.last_ts)
+    ).join(last_msgs_with_sender, Member.chat_id == last_msgs_with_sender.c.chat_id
     ).filter(Member.user_id == user_id
-    ).order_by(subq.c.last_ts.desc())
+    ).order_by(last_msgs_with_sender.c.last_ts.desc())
 
     return [row._asdict() for row in q.all()]
+
+# def get_chat_list(user_id: int):
+#     # print('chat_list user_id: ', user_id)
+#     subq = db.session.query(
+#         MessageEntry.chat_id,
+#         func.max(MessageEntry.timestamp).label('last_ts'),
+#     ).filter(MessageEntry.deleted_status == 1
+#     ).group_by(MessageEntry.chat_id).subquery()
+#     print('subq: ', subq)
+
+#     q = db.session.query(
+#         Member.chat_id,
+#         Chat.chat_name,
+#         Chat.type_id,
+#         Member.chat_state_id,
+#         Member.role_id,
+#         MessageEntry.message, 
+#         subq.c.last_ts,
+#         User.name.label('sender_name')
+#     ).join(Chat, Member.chat_id == Chat.id
+#     ).join(subq, Member.chat_id == subq.c.chat_id
+#     ).join(MessageEntry,
+#            (MessageEntry.chat_id == subq.c.chat_id) &
+#            (MessageEntry.timestamp == subq.c.last_ts)
+#     ).join(Member, MessageEntry.member_id == Member.id 
+#     ).join(User, Member.user_id == User.id
+#     ).filter(Member.user_id == user_id
+#     ).order_by(subq.c.last_ts.desc())
+
+#     return [row._asdict() for row in q.all()]
 
 def get_chat_list_empty(user_id: int):
-    q = db.session.query(
-        Member.chat_id,
-        Chat.chat_name,
-        Chat.type_id,
-        Member.chat_state_id,
-        Member.role_id
-    ).join(Chat, Member.chat_id == Chat.id
-    ).filter(Member.user_id == user_id
-    ).outerjoin(MessageEntry, MessageEntry.chat_id == Chat.id
-    ).group_by(
-        Member.chat_id,
-        Chat.chat_name,
-        Chat.type_id,
-        Member.chat_state_id,
-        Member.role_id
-    ).having(func.count(MessageEntry.id) == 0)
+    non_deleted_count = func.sum(
+        case(
+            (MessageEntry.deleted_status != 2, 1),
+            else_=0
+        )
+    )
 
+    q = (
+        db.session.query(
+            Member.chat_id,
+            Chat.chat_name,
+            Chat.type_id,
+            Member.chat_state_id,
+            Member.role_id
+        )
+        .join(Chat, Member.chat_id == Chat.id)
+        .filter(Member.user_id == user_id)
+        .outerjoin(MessageEntry, MessageEntry.chat_id == Chat.id)
+        .group_by(
+            Member.chat_id,
+            Chat.chat_name,
+            Chat.type_id,
+            Member.chat_state_id,
+            Member.role_id
+        )
+        .having(non_deleted_count == 0)
+    )
     return [row._asdict() for row in q.all()]
+ 
 
 def get_chat_state_id(chat_id: int, user_id: int):
     m = Member.query.filter_by(chat_id=chat_id, user_id=user_id).first()
@@ -297,7 +396,7 @@ def get_members(chat_id: int):
 
     return [ dict(row._mapping) for row in rows ]
 
-def block_user(chat_id: int, user_id: int):
+def db_block_user(chat_id: int, user_id: int):
     m = Member.query.filter_by(chat_id=chat_id, user_id=user_id).first()
     if not m:
         return False
@@ -306,17 +405,25 @@ def block_user(chat_id: int, user_id: int):
     db.session.commit()
     return True
 
-def unblock_user(chat_id: int, user_id: int):
+def db_unblock_user(chat_id: int, user_id: int):
     m = Member.query.filter_by(chat_id=chat_id, user_id=user_id).first()
     if not m:
         return False
-    active = ChatState.query.filter_by(state="active").first()
-    m.chat_state_id = active.id if active else m.chat_state_id
+    unblock = ChatState.query.filter_by(state="unblock").first()
+    m.chat_state_id = unblock.id if unblock else m.chat_state_id
     db.session.commit()
     return True
 
-def clear_chat(chat_id: int):
-    MessageEntry.query.filter_by(chat_id=chat_id).delete()
+def db_clear_chat(chat_id: int):
+    msges = MessageEntry.query.filter_by(chat_id=chat_id).all()
+
+    if not msges:
+        return False
+    
+    for msg in msges:
+        msg.deleted_status = 2
+        msg.deleted_timestamp = datetime.now()
+
     db.session.commit()
     return True
 

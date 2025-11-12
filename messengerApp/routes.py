@@ -9,12 +9,13 @@ main_bp = Blueprint("main", __name__)
 from .crud import (
     create_user, check_login, get_password,
     edit_profile, delete_user, create_chat, save_message,
-    get_chat_inf, join_group, leave_chat, block_user,
-    unblock_user, clear_chat, get_members, 
+    get_chat_inf, db_join_group, db_leave_chat, db_block_user,
+    db_unblock_user, db_clear_chat, get_members, 
     get_member_id, get_avatar_group, get_chat_state_id, get_role_id,
     check_chat_name, check_group_joined, check_code, get_name_friend,
     add_avatar_chat, check_username, add_members, get_chat_id, add_token_chat, 
-    get_avatar_friend, get_cnt_members, get_chat_id_by_names, get_user_info_by_id
+    get_avatar_friend, get_cnt_members, get_chat_id_by_names, get_user_info_by_id, 
+    delete_message, edit_message, forward_message, reply_message, get_user_id_by_username
 )
 
 from .utils import (session_edit, clear_session, get_session, get_chats, get_token, get_messages)
@@ -98,10 +99,16 @@ def home():
 def settings():
     if session.get("logged_in"):
         username, name, lastname, bday, avatar, bio = get_session(session.get("login"))
-        # print(username)
+        print(username, name, lastname, bday, avatar, bio)
         if avatar is None:
             avatar = "default_avatar.jpg"
-        return render_template("settings.html", username=username, name=name, lastname=lastname, bday=bday, avatar=avatar, bio=bio)
+        return render_template("settings.html", 
+                               username=username, 
+                               name=name, 
+                               lastname=lastname, 
+                               bday=bday, 
+                               avatar=avatar, 
+                               bio=bio)
     else:
         return redirect("/")
 
@@ -207,7 +214,7 @@ def join_group():
             chat_id = get_chat_id(token)
             if not check_group_joined(chat_id, user_id):
                 role_id = 3
-                join_group(chat_id, user_id, role_id)
+                db_join_group(chat_id, user_id, role_id)
                 return redirect('/home')
             else:
                 msg = 'You have already joined'
@@ -267,8 +274,13 @@ def open_chat(chat_id):
 @main_bp.route("/message", methods=["POST", 'GET'])
 def message():
     if request.method == 'POST':
-        msg = request.form['message']
-        print('msg: ', msg)
+        # msg = request.form['message']
+        data = request.get_json() 
+        # print("data: ", data)
+        msg = data.get("msg") 
+        reply_id = data.get("reply_id")
+        # print("msg: ", msg, "reply_id: ", reply_id)
+
         type_id = 1 #text
         timestamp = datetime.now()
         user_id = session.get("user_id")
@@ -276,34 +288,79 @@ def message():
         state_id = 1
         content_state_id = 1
         member_id = get_member_id(chat_id, user_id)
-        save_message(msg, type_id, timestamp, member_id, chat_id, state_id, content_state_id)
+        msg_id = save_message(msg, type_id, timestamp, member_id, chat_id, state_id, content_state_id)
+        if reply_id:
+            reply_message(msg_id, reply_id)
+        
         # payload = {'chat_id': chat_id, 'message': msg, 'timestamp': timestamp, 'user_id': user_id}
         socketio.emit('new_message', msg)
         return redirect("/home")
     
+
+@main_bp.route("/edit_msg", methods=["POST"])
+def edit_msg():
+    data = request.get_json() 
+    # print("data: ", data)
+    msg_id = data.get("id") 
+    msg_txt = data.get("text")
+    # print("msg_id: ", msg_id, "msg_txt: ", msg_txt)
+    edit_message(msg_id, msg_txt)
+    socketio.emit('edit_message')
+    return redirect("/")
+
+@main_bp.route("/forward_msg", methods=["POST"])
+def forward_msg():
+    data = request.get_json()
+    # print("DATA: ", data)
+    target_chat_id = data.get('target_chat_id')
+    orig_sender = data.get('orig_sender')
+    # print('orig_sender: ', orig_sender)
+    msg = data.get('msg')
+    # print('msg: ', msg)
+    type_id = 1 #text
+    timestamp = datetime.now()
+    user_id = session.get("user_id")
+    member_id = get_member_id(target_chat_id, user_id)
+    # print("member_id: ", member_id)
+    msg_id = save_message(msg, type_id, timestamp, member_id, target_chat_id, 1, 1)
+    forward_message(msg_id, orig_sender)
+    socketio.emit('new_message', msg)
+    return redirect("/")
+
+
+@main_bp.route("/delete_msg/<int:msg_id>")    
+def delete_msg(msg_id):
+    delete_message(msg_id)
+    socketio.emit('chat_action')
+    return redirect("/")
+
 @main_bp.route("/block_user")
 def block_user():
     friend_id = session.get('friend_id')
-    block_user(session.get('chat_id'), friend_id)
+    db_block_user(session.get('chat_id'), friend_id)
     session['chat_friend_state_id'] = 2
+    socketio.emit('chat_action')
     return redirect("/home")
 
 @main_bp.route("/unblock_user")
 def unblock_user():
     friend_id = session.get('friend_id')
-    unblock_user(session.get('chat_id'), friend_id)
+    db_unblock_user(session.get('chat_id'), friend_id)
     session['chat_friend_state_id'] = 1
+    socketio.emit('chat_action')
     return redirect("/home")
 
 @main_bp.route("/leave_chat")
 def leave_chat():
-    leave_chat(session.get('chat_id'), session.get('user_id'))
+    db_leave_chat(session.get('chat_id'), session.get('user_id'))
     session['chat_id'] = None
+    socketio.emit('chat_action')
     return redirect("/home")
 
 @main_bp.route("/clear_chat")
 def clear_chat():
-    clear_chat(session.get('chat_id'))
+    db_clear_chat(session.get('chat_id'))
+    socketio.emit('chat_action')
     return redirect("/home")
 
 @main_bp.route("/delete_chat")
@@ -313,6 +370,7 @@ def delete_chat():
     leave_chat(chat_id, user_id)
     delete_chat(chat_id)
     session['chat_id'] = None
+    socketio.emit('chat_action')    
     return redirect("/home")
 
 @main_bp.route("/upd_chat_list")
@@ -355,12 +413,56 @@ def upd_chat_list():
             return render_template("chat_list.html", chat_list=chats, chat=chat_inf)
         else:
             return render_template("chat_list.html", chat=None)
+        
+        
+@main_bp.route("/upd_chat_list_forward")
+def upd_chat_list_forward():
+    chat_id = session.get('chat_id')
+    chats = get_chats()
+    # print("CHATS list: ", chats)
+    if chat_id:
+        chat_name = session.get('chat_name')
+        chat_type_id = session.get('chat_type_id')
+        chat_avatar = session.get('chat_avatar')
+        chat_state_id = session.get('chat_state_id')
+        chat_friend_state_id = session.get('chat_friend_state_id')
+        chat_role_id = session.get('chat_role_id')
+        if chat_type_id == 2:
+            cnt_members = get_cnt_members(chat_id)
+        else:
+            cnt_members = None
+        chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, cnt_members, chat_state_id, chat_friend_state_id, chat_role_id]
+        # print("chat_inf: ", chat_inf) 
+        return render_template("chat_list_forward.html", chat_list=chats, chat=chat_inf)
+    else:
+        if chats:
+            chat_inf = chats[0]
+            # print("CHAT_INF chat_list: ", chat_inf)
+            chat_id = session['chat_id'] = chat_inf[0]
+            chat_name = session['chat_name'] = chat_inf[1]
+            chat_type_id = session['chat_type_id'] = chat_inf[2]
+            chat_avatar = session['chat_avatar'] = chat_inf[3]
+            chat_state_id = session['chat_state_id'] = chat_inf[7]
+            chat_friend_state_id = session['chat_friend_state_id'] = chat_inf[8]
+            chat_role_id = session['chat_role_id'] = chat_inf[9]
+            # print("Role_id: ", chat_role_id)
+            if chat_type_id == 2:
+                cnt_members = get_cnt_members(chat_id)
+            else:
+                cnt_members = None
+            chat_inf = [chat_id, chat_name, chat_type_id, chat_avatar, cnt_members, chat_state_id, chat_friend_state_id, chat_role_id]
+            # print("chat_inf: ", chat_inf)
+            return render_template("chat_list_forward.html", chat_list=chats, chat=chat_inf)
+        else:
+            return render_template("chat_list_forward.html", chat=None)
+
 
 @main_bp.route("/upd_chat_messages")
 def upd_chat_messages():
     chat_id = session.get('chat_id')
     chats = get_chats()
     user_id = session.get('user_id')
+    # print('user_id: ', user_id)
     # print("CHATS messages: ", chats)
     if chat_id:
         chat_name = session.get('chat_name')
@@ -445,36 +547,69 @@ def copy_inf_code():
         return redirect("/home")
 
 
+@main_bp.route("/open_forwarded_profile/<string:sender>", methods=['GET'])
+def open_forwarded_profile(sender):
+    print('SEnder: ', sender)
+    try:
+        id = get_user_id_by_username(sender)
+        if id is None:
+            print('ID is None')
+            return redirect('/home')
+        print("ID: ", id.get('id'))
+        return redirect(f"/open_chat_preview/{id.get('id')}")   
+    
+    except Exception as e:
+        print(f"Error in open_forwarded_profile: {e}")
+        return redirect("/home")
+
 @main_bp.route("/open_chat_preview/<int:friend_id>", methods=['POST', 'GET'])
 def open_chat_preview(friend_id):
+    print('friend_id: ', friend_id)
     user_id = session.get('user_id')
-    name, lastname = get_name_friend(friend_id)
-    chat_name_1 = f'{user_id}_{friend_id}'
-    chat_name_2 = f'{friend_id}_{user_id}'
-    chat_id = get_chat_id_by_names(chat_name_1, chat_name_2)
-    
-    if chat_id:
-        session['chat_id'] = chat_id
-        session['chat_name'] = f"{name} {lastname}"
-        session['role_id'] = get_role_id(chat_id, user_id)
-        session['chat_friend_state_id'] = get_chat_state_id(chat_id, friend_id)
-        session['chat_state_id'] = get_chat_state_id(chat_id, user_id)  # Исправлено с friend_id на user_id
-        session['chat_type_id'] = 1
-        session['chat_avatar'] = get_avatar_friend(friend_id)
-        session['friend_id'] = friend_id
+    print('user_id: ', user_id)
+    if user_id == friend_id:
+        print('user_id = friend_id')
+        return redirect("/settings")
     else:
-        session['chat_name'] = f'{name} {lastname}'
-        session['chat_type_id'] = 1
-        session['role_id'] = 1
-        session['chat_state_id'] = 1
-        session['chat_friend_state_id'] = 1
-        chat_id = create_chat(user_id, f'{user_id}_{friend_id}', 1)
-        session['chat_id'] = chat_id
-        session['friend_id'] = friend_id
-        session['chat_avatar'] = get_avatar_friend(friend_id)
-        add_members(chat_id, friend_id)
+        name, lastname = get_name_friend(friend_id)
+        print('name, lastname ', name, lastname)
+        chat_name_1 = f'{user_id}_{friend_id}'
+        chat_name_2 = f'{friend_id}_{user_id}'
+        chat_id = get_chat_id_by_names(chat_name_1, chat_name_2)
+        print('chat_id: ', chat_id)
     
-    return redirect("/chat_preview")
+        if chat_id:
+            print('session_edit')
+            session['chat_id'] = chat_id
+            print('chat_id: ',chat_id)
+            session['chat_name'] = f"{name} {lastname}"
+            print(f"{name} {lastname}")
+            session['role_id'] = get_role_id(chat_id, user_id)
+            print('role: ', get_role_id(chat_id, user_id))
+            session['chat_friend_state_id'] = get_chat_state_id(chat_id, friend_id)
+            print('state_fr: ', get_chat_state_id(chat_id, friend_id))
+            session['chat_state_id'] = get_chat_state_id(chat_id, user_id) 
+            print('state: ', get_chat_state_id(chat_id, user_id))
+            session['chat_type_id'] = 1
+            session['chat_avatar'] = get_avatar_friend(friend_id)
+            print('avatar: ', get_avatar_friend(friend_id))
+            session['friend_id'] = friend_id
+            print('friend_id: ', friend_id)
+            print('session_edited')
+        else:
+            session['chat_name'] = f'{name} {lastname}'
+            session['chat_type_id'] = 1
+            session['role_id'] = 1
+            session['chat_state_id'] = 1
+            session['chat_friend_state_id'] = 1
+            chat_id = create_chat(user_id, f'{user_id}_{friend_id}', 1)
+            print('create_chat chat_id: ', chat_id)
+            session['chat_id'] = chat_id
+            session['friend_id'] = friend_id
+            session['chat_avatar'] = get_avatar_friend(friend_id)
+            add_members(chat_id, friend_id)
+    
+        return redirect("/chat_preview")
     
 
 @main_bp.route('/chat_preview')
@@ -486,13 +621,18 @@ def chat_preview():
     # print(f'chat_name: {chat_name}\ncnt_members: {cnt_members}\nchat_type_id: {chat_type_id}')
     if chat_type_id == 1:
         friend_id = session.get('friend_id')
+        print('! friend_id: ', friend_id)
         role_id = session.get('role_id')
+        print('! role_id: ', role_id)
         chat_friend_state_id = session.get('chat_friend_state_id')
+        print('! fr state_id: ', chat_friend_state_id)
         friend_info = get_user_info_by_id(friend_id)
+        print('! fr info: ', friend_info)
+        print('render chat_preview')
         return render_template("chat_preview.html", chat_name=chat_name, chat_type_id=chat_type_id, chat_avatar = chat_avatar, role_id = role_id, chat_friend_state_id = chat_friend_state_id, friend_info=friend_info, chat_id=chat_id)
     elif chat_type_id == 2:
         members = get_members(chat_id)
-        print('members: ', members)
+        # print('members: ', members)
         cnt_members = get_cnt_members(chat_id)
         return render_template("chat_preview.html", 
                             chat_name=chat_name, 
@@ -502,3 +642,4 @@ def chat_preview():
                             members=members,
                             user_id=session.get('user_id'),
                             chat_id=chat_id)
+    

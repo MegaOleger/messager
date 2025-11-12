@@ -12,7 +12,7 @@ def create_app():
     socketio.init_app(app)
 
     app.register_blueprint(main_bp)
-    register_socketio_handlers()
+    register_socketio_handlers(socketio)
 
     return app
 

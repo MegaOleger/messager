@@ -5,7 +5,14 @@
     </div>
     <div class="chat-list-body-element-name-message">
         <div class="name"><p class="chat-list-body-element-name">{{ chat[1] }}</p></div>
-        <div class="msg"><p class="chat-list-body-element-message">{{ chat[4] }}</p></div>
+        <div class="msg">
+            {% if chat[4] %}
+                <p class="chat-list-body-element-sender">{{ chat[10] }}:</p>
+                <p class="chat-list-body-element-message">{{ chat[4] }}</p>
+            {% else %}
+                <p class="chat-list-body-element-message" style="margin-left: 0px;">The chat is empty</p>
+            {% endif %}
+        </div>
     </div>                        
     <div class="chat-list-body-element-date-unread">
         <div class="chat-list-body-element-date">
