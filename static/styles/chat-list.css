@@ -427,6 +427,8 @@
 .msg{
     height: 14px;
     width: 200px;
+    display: inline-flex;
+    align-items: center;
 }
 
 .chat-list-body-element-name{
@@ -437,12 +439,20 @@
     height: 20px;
 }
 
+.chat-list-body-element-sender{
+    flex: 0 0 auto;
+    height: 20px;
+    white-space: nowrap;
+}
+
 .chat-list-body-element-message{
+    flex: 1 1 auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    width: 100%;
     height: 20px;
+    min-width: 0;
+    margin-left: 5px;
 }
 
 

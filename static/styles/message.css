@@ -16,7 +16,7 @@
   font-weight: 300;
   letter-spacing: 0.05em;
   caret-color: transparent;
-  margin-bottom: 60px;
+  margin-bottom: 30px;
 }
 .message-left { 
   margin-bottom: 10px;
@@ -91,6 +91,7 @@
   max-width: 350px;
   white-space: pre-wrap;
   margin-bottom: 0%;
+  overflow-wrap: anywhere;
 }
 
 .message-body{
@@ -99,6 +100,29 @@
   justify-content: flex-end;
   justify-content: space-around;
   align-items: center;
+}
+.forward-body{
+  display: flex;
+  flex-direction: row;
+  /* justify-content: flex-end; */
+  justify-content: space-around;
+  align-items: center;
+}
+.forward-body-text{
+  font-size: 100%;
+  user-select: text;
+  max-width: 350px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-bottom: 0%;
+}
+.forward-orig_sender{
+  font-size: 80%;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+.forward-orig_sender:hover{
+  color: rgb(203, 203, 203);
 }
 .message-body-date-seen{
   align-self: flex-end; 
@@ -113,6 +137,10 @@
   margin-right: 2px;
   font-size: 0.8em;
   color: #a7a7a7;
+}
+.message-body-img_edit{
+  width: 14px;
+  filter: invert(50%);
 }
 .message-body-seen{  
   align-self: flex-end;
@@ -165,9 +193,7 @@
   padding-bottom: 5px;
   left: 0;
   top: 0;
-  /* left: 800px;
-  top: 300px; */
-  /* margin-left: 400px; */
+  z-index: 1000;
 }
 .msg_menu-btn{
   position: relative;
@@ -216,4 +242,12 @@
   letter-spacing: 0.05em;
   caret-color: transparent;
   margin-bottom: 15px;
+}
+
+.reply_cont{
+  background-color: #4a4a4a;
+  border-left: 3px solid #b8b8b8;
+  border-radius: 5px;
+  margin-bottom: 5px;
+  padding: 5px;
 }

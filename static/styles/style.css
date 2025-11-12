@@ -4,6 +4,7 @@
 @import "chat-list.css";
 @import "chat.css";
 @import "chat-header.css";
+@import "chat-list-forward.css";
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;1,300&display=swap');
 
 html{

@@ -1,0 +1,22 @@
+{% for chat in chat_list %}
+    <div href="/open_chat/{{ chat[0] }}" class="body-element_fw" id="fw_{{ chat[0] }}" tabindex="0">
+        <div class="chat-select-checkbox">
+            <input type="checkbox" class="chat-checkbox" data-chat-id="{{ chat[0] }}">
+        </div>
+        <div class="chat-list-body-element-avatar_fw">
+            <img class="chat-list-body-element-avatar-image_fw" src="../static/images/avatars/{{ chat[3] }}" alt="">
+        </div>
+        <div class="chat-list-body-element-name-message_fw">
+            <div class="name_fw"><p class="chat-list-body-element-name_fw">{{ chat[1] }}</p></div>
+            <div class="msg_fw"><p class="chat-list-body-element-message_fw">{{ chat[4] }}</p></div>
+        </div>                        
+        <div class="chat-list-body-element-date-unread_fw">
+            <div class="chat-list-body-element-date_fw">
+                <p class="chat-list-body-element-date-text_fw">{{ chat[5] }}</p>
+            </div>                   
+        </div>
+    </div>
+{% endfor %}
+<button class="forward_send_btn" id="send_forward_btn" style="display: none;" >
+    <img src="..\static\images\icons\send.svg" style="width: 20px;">
+</button>
