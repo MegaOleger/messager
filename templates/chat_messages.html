@@ -10,26 +10,60 @@
                     <p class="datestamp">{{ date }}</p>
                     <hr style="margin-bottom: 15px; width: 80%; border: 2px dashed #484848; border-radius: 5px; ">
                     {% for msg in messages[date] %}
-                        {% if msg["user_id"] != user_id %}
+                        {% if msg["user_id"] != user_id %} <!-- friend msg -->
                             <div class="message-avatar"><img src="../static/images/avatars/{{msg['avatar']}}" class="avatar-img"></div>
                             <div class="message-left message" id="message" data-message-id="{{ msg['message_id'] }}" data-username="{{ msg['username'] }}">
+                            {% if msg["reply_id"] %}
+                                <div onclick="ScrollToReplyMsg({{ msg['reply_id'] }})" class="reply_cont" data-message-id="{{ msg['reply_id'] }}"></div>
+                            {% endif %}
+                            {% if msg["orig_sender"] %}
+                                <div onclick="OpenChatPreview('{{ msg['orig_sender'] }}')" class="forward-orig_sender">Forwarded from<br>{{ msg["orig_sender"] }}</div>
+                                <div class="forward-body">
+                                    <div class="message-body-text">{{ msg["message"] }}</div>
+                                    <div class="message-body-date-seen">
+                                        <div class="message-body-date">{{ msg["timestamp"] }}</div>    
+                                        <div class="message-body-seen"></div>
+                                    </div>  
+                                </div>
+                            {% else %}
                                 <div class="message-body">
                                     <div class="message-body-text">{{ msg["message"] }}</div>
                                     <div class="message-body-date-seen">
-                                        <div class="message-body-date">{{ msg["timestamp"] }}</div>  
+                                        <div class="message-body-date">{{ msg["timestamp"] }}</div> 
+                                        {% if msg["content_state_id"] == 2 %}
+                                            <img class="message-body-img_edit" src="..\static\images\icons\pen.svg"> 
+                                        {% endif %}
                                         <div class="message-body-seen"></div>
                                     </div>                                
-                                </div>                          
+                                </div>   
+                            {% endif %}                       
                             </div>
-                        {% elif msg["user_id"] == user_id %}
+                        {% elif msg["user_id"] == user_id %} <!-- user msg -->
                             <div class="message-right message" id="message" data-message-id="{{ msg['message_id'] }}"  data-username="{{ msg['username'] }}">
+                            {% if msg["reply_id"] %}
+                                <div onclick="ScrollToReplyMsg({{ msg['reply_id'] }})" class="reply_cont" data-message-id="{{ msg['reply_id'] }}"></div>
+                            {% endif %}
+                            {% if msg["orig_sender"] %}
+                                <div onclick="OpenChatPreview('{{ msg['orig_sender'] }}')" class="forward-orig_sender">Forwarded from<br>{{ msg["orig_sender"] }}</div>
+                                <div class="forward-body">
+                                    <div class="message-body-text">{{ msg["message"] }}</div>
+                                    <div class="message-body-date-seen">
+                                        <div class="message-body-date">{{ msg["timestamp"] }}</div>    
+                                        <div class="message-body-seen"></div>
+                                    </div>  
+                                </div>
+                            {% else %}
                                 <div class="message-body">
                                     <div class="message-body-text">{{ msg["message"] }}</div>
                                     <div class="message-body-date-seen">
-                                        <div class="message-body-date">{{ msg["timestamp"] }}</div>      
+                                        <div class="message-body-date">{{ msg["timestamp"] }}</div>
+                                        {% if msg["content_state_id"] == 2 %}
+                                            <img class="message-body-img_edit" src="..\static\images\icons\pen.svg"> 
+                                        {% endif %}      
                                         <div class="message-body-seen"></div>
                                     </div>    
                                 </div> 
+                            {% endif %} 
                             </div>
                         {% endif %}
                     {% endfor %}

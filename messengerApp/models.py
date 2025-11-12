@@ -89,14 +89,18 @@ class Member(db.Model):
  
 class MessageEntry(db.Model):
     __tablename__ = 'message_entries'
-    id               = db.Column(db.Integer, primary_key=True)
-    message          = db.Column(db.Text, nullable=False)
-    type_id          = db.Column(db.Integer, db.ForeignKey('entry_types.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
-    timestamp        = db.Column('timestamp', db.DateTime, nullable=False)
-    member_id        = db.Column(db.Integer, db.ForeignKey('members.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
-    chat_id          = db.Column(db.Integer, db.ForeignKey('chats.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
-    state_id         = db.Column(db.Integer, db.ForeignKey('message_states.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
-    content_state_id = db.Column(db.Integer, db.ForeignKey('message_content_states.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+    id                = db.Column(db.Integer, primary_key=True)
+    message           = db.Column(db.Text, nullable=False)
+    type_id           = db.Column(db.Integer, db.ForeignKey('entry_types.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+    timestamp         = db.Column('timestamp', db.DateTime, nullable=False)
+    member_id         = db.Column(db.Integer, db.ForeignKey('members.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+    chat_id           = db.Column(db.Integer, db.ForeignKey('chats.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+    state_id          = db.Column(db.Integer, db.ForeignKey('message_states.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+    content_state_id  = db.Column(db.Integer, db.ForeignKey('message_content_states.id', onupdate='CASCADE', ondelete='CASCADE'), nullable=False)
+    deleted_status    = db.Column(db.Integer, nullable=False, default=1)
+    deleted_timestamp = db.Column('deleted_timestamp', db.DateTime, nullable=True)
+    reply_id          = db.Column(db.Integer, nullable=True)
+    orig_sender       = db.Column(db.Text, nullable=True)
  
     entry_type    = db.relationship('EntryType',           back_populates='message_entries')
     member        = db.relationship('Member',              back_populates='message_entries')

@@ -61,10 +61,11 @@ def get_chats():
             if last_msg_elem != None:
                 last_msg, date = last_msg_elem
                 date = date.strftime('%d.%m %H:%M')
-                # print('date get_chats: ', date)
+                sender = elem.get('sender_name')
             else:
                 last_msg = ""
                 date = ""
+                sender = ""
             if chat_type_id == 1:
                 first_id = int(chat_name.split("_")[0])
                 second_id = int(chat_name.split("_")[1])
@@ -76,8 +77,8 @@ def get_chats():
             elif chat_type_id == 2:
                 chat_avatar = get_avatar_group(chat_id)
                 chat_friend_state_id = None
-            cnt_unread_msg = 100
-            chats.append((chat_id, chat_name, chat_type_id, chat_avatar, last_msg, date, cnt_unread_msg, chat_state_id, chat_friend_state_id, chat_role_id))
+            cnt_unread_msg = 100 #
+            chats.append((chat_id, chat_name, chat_type_id, chat_avatar, last_msg, date, cnt_unread_msg, chat_state_id, chat_friend_state_id, chat_role_id, sender))
     
     if chat_list_empty:
         for elem in chat_list_empty:
@@ -110,9 +111,23 @@ def get_messages(chat_id):
     if messages:
         for msg in messages:
             if displayed_messages.get(msg.get('timestamp').strftime('%d.%m.%Y')):
-                displayed_messages[msg.get('timestamp').strftime('%d.%m.%Y')].append({"message_id" : msg.get('id'), "message" : msg.get('message'), "message_type_id" : msg.get('type_id'), "timestamp" : msg.get('timestamp').strftime('%H:%M'), "user_id" : msg.get('user_id'), "chat_id" : msg.get('chat_id'), "state_id" : msg.get('state_id'), "content_state_id" : msg.get('content_state_id'), "type_chat" : msg.get('type_chat'), "avatar" : msg.get('avatar'), "username" : msg.get('username')})
+                displayed_messages[msg.get('timestamp').strftime('%d.%m.%Y')].append({
+                    "message_id" : msg.get('id'), "message" : msg.get('message'), "message_type_id" : msg.get('type_id'), 
+                    "timestamp" : msg.get('timestamp').strftime('%H:%M'), "user_id" : msg.get('user_id'), 
+                    "chat_id" : msg.get('chat_id'), "state_id" : msg.get('state_id'), 
+                    "content_state_id" : msg.get('content_state_id'), "type_chat" : msg.get('type_chat'), 
+                    "avatar" : msg.get('avatar'), "username" : msg.get('username'), "reply_id" : msg.get('reply_id'), 
+                    "orig_sender" : msg.get('orig_sender')
+                    })
             else:
-                displayed_messages[msg.get('timestamp').strftime('%d.%m.%Y')] = [{"message_id" : msg.get('id'), "message" : msg.get('message'), "message_type_id" : msg.get('type_id'), "timestamp" : msg.get('timestamp').strftime('%H:%M'), "user_id" : msg.get('user_id'), "chat_id" : msg.get('chat_id'), "state_id" : msg.get('state_id'), "content_state_id" : msg.get('content_state_id'), "type_chat" : msg.get('type_chat'), "avatar" : msg.get('avatar'), "username" : msg.get('username')}]
+                displayed_messages[msg.get('timestamp').strftime('%d.%m.%Y')] = [{
+                    "message_id" : msg.get('id'), "message" : msg.get('message'), "message_type_id" : msg.get('type_id'), 
+                    "timestamp" : msg.get('timestamp').strftime('%H:%M'), "user_id" : msg.get('user_id'), 
+                    "chat_id" : msg.get('chat_id'), "state_id" : msg.get('state_id'), 
+                    "content_state_id" : msg.get('content_state_id'), "type_chat" : msg.get('type_chat'), 
+                    "avatar" : msg.get('avatar'), "username" : msg.get('username'), "reply_id" : msg.get('reply_id'), 
+                    "orig_sender" : msg.get('orig_sender')
+                    }]
         # print('Messages: ', displayed_messages)
         return displayed_messages
     else: return None
