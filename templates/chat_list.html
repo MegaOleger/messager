@@ -1,3 +1,8 @@
+{% if not chat_list %}
+    <p style="color:rgb(197, 197, 197); background-color:#70707044;  
+    border: 2px solid rgb(93, 93, 93); border-radius: 5px; 
+    margin: auto; padding: 3px; font-size: 25px; margin-top: 35px;">You don't have chats</p>
+{% endif %}
 {% for chat in chat_list %}
 <a href="/open_chat/{{ chat[0] }}" class="body-element" id="{{ chat[0] }}" tabindex="0">
     <div class="chat-list-body-element-avatar">
