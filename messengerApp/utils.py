@@ -1,8 +1,8 @@
 import jwt
 from flask import current_app, session
 from .crud import (
-    get_chat_list, get_chat_list_empty, get_user_inf, get_name_friend, get_avatar_friend, 
-    get_chat_state_id, get_avatar_group, get_base_messages)
+    db_get_chat_list, db_get_chat_list_empty, db_get_user_by_login, db_get_name_friend, db_get_avatar_friend, 
+    db_get_chat_state_id, db_get_avatar_group, db_get_base_messages)
 
 def clear_session():
     session.clear()
@@ -17,7 +17,14 @@ def session_edit(**kwargs):
     if not kwargs:
         login = session.get("login")
         # print("session_edit login: ", login)
-        user_id, username, name, lastname, bday, avatar, bio = get_user_inf(login)  
+        u = db_get_user_by_login(login)  
+        user_id = u.id
+        username = u.username or u.login
+        name = u.name
+        lastname = u.lastname
+        bday = u.bday
+        avatar = u.avatar
+        bio = u.bio
         # print("session_edit: ", user_id, username, name, lastname, bday, avatar, bio)
         if avatar is None:
             avatar = "default_avatar.jpg"
@@ -47,8 +54,8 @@ def get_session(login):
     
 def get_chats():
     user_id = session.get("user_id")
-    chat_list = get_chat_list(user_id)
-    chat_list_empty = get_chat_list_empty(user_id)
+    chat_list = db_get_chat_list(user_id)
+    chat_list_empty = db_get_chat_list_empty(user_id)
     chats = []
     if chat_list:
         for elem in chat_list:
@@ -70,12 +77,12 @@ def get_chats():
                 first_id = int(chat_name.split("_")[0])
                 second_id = int(chat_name.split("_")[1])
                 friend_id = second_id if user_id == first_id else first_id
-                name, lastname = get_name_friend(friend_id)
-                chat_avatar = get_avatar_friend(friend_id)
+                name, lastname = db_get_name_friend(friend_id)
+                chat_avatar = db_get_avatar_friend(friend_id)
                 chat_name = f"{name} {lastname}"
-                chat_friend_state_id = get_chat_state_id(chat_id, friend_id)
+                chat_friend_state_id = db_get_chat_state_id(chat_id, friend_id)
             elif chat_type_id == 2:
-                chat_avatar = get_avatar_group(chat_id)
+                chat_avatar = db_get_avatar_group(chat_id)
                 chat_friend_state_id = None
             cnt_unread_msg = 100 #
             chats.append((chat_id, chat_name, chat_type_id, chat_avatar, last_msg, date, cnt_unread_msg, chat_state_id, chat_friend_state_id, chat_role_id, sender))
@@ -93,19 +100,19 @@ def get_chats():
                 first_id = int(chat_name.split("_")[0])
                 second_id = int(chat_name.split("_")[1])
                 friend_id = second_id if user_id == first_id else first_id
-                name, lastname = get_name_friend(friend_id)
-                chat_avatar = get_avatar_friend(friend_id)
+                name, lastname = db_get_name_friend(friend_id)
+                chat_avatar = db_get_avatar_friend(friend_id)
                 chat_name = f"{name} {lastname}"
-                chat_friend_state_id = get_chat_state_id(chat_id, friend_id)
+                chat_friend_state_id = db_get_chat_state_id(chat_id, friend_id)
             elif chat_type_id == 2:
-                chat_avatar = get_avatar_group(chat_id)
+                chat_avatar = db_get_avatar_group(chat_id)
                 chat_friend_state_id = None
             cnt_unread_msg = 100
             chats.append((chat_id, chat_name, chat_type_id, chat_avatar, last_msg, date, cnt_unread_msg, chat_state_id, chat_friend_state_id, chat_role_id))
     return chats if chats else None
 
 def get_messages(chat_id):
-    messages = get_base_messages(chat_id)
+    messages = db_get_base_messages(chat_id)
     # print('get messages: ', messages)
     displayed_messages = {}
     if messages:

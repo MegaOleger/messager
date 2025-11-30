@@ -6,40 +6,32 @@ from .models import (
 )
 from .extensions import db
 
-def get_user_by_login(login: str):
-    u = User.query.filter_by(login=login).first()
-    user = {
-        'id': u.id,
-        'username': u.username,
-        'name': u.name,
-        'lastname': u.lastname,
-        'bday': u.bday,
-        'avatar': u.avatar,
-        'bio': u.bio
-    }
-    # print('get_user_by_login: ', user)
-
-    return user if u else None
-
-def get_user_inf(login: str):
-    u = get_user_by_login(login)
-    # print("get_user_inf: ", u)
-    # print('Name: ', u.get('name'))
-    if not u:
+def db_get_user_by_login(login: str):
+    users = User.query.filter_by(login=login).all()
+    print('users: ', users)
+    if users:
+        return users[0]
+    else: 
         return None
-    user = {
-        'id': u['id'],
-        'username': u.get('username') or u.get('login'),
-        'name': u.get('name'),
-        'lastname': u.get('lastname'),
-        'bday': u.get('bday'),
-        'avatar': u.get('avatar'),
-        'bio': u.get('bio')
-    }
-    # print('get_user_inf: ', u['id'], u.get('username'), u.get('name'), u.get('lastname'), u.get('bday'), u.get('avatar'), u.get('bio'))
-    return u['id'], u.get('username'), u.get('name'), u.get('lastname'), u.get('bday'), u.get('avatar'), u.get('bio')
 
-def get_user_info_by_id(user_id: int):
+# def get_user_inf(login: str):
+#     u = get_user_by_login(login)
+#     # print('Name: ', u.get('name'))
+#     if not u:
+#         return None
+#     user = {
+#         'id': u.id,
+#         'username': u.username or u.get('login'),
+#         'name': u.name,
+#         'lastname': u.lastname,
+#         'bday': u.bday,
+#         'avatar': u.avatar,
+#         'bio': u.bio
+#     }
+#     # print('get_user_inf: ', u['id'], u.get('username'), u.get('name'), u.get('lastname'), u.get('bday'), u.get('avatar'), u.get('bio'))
+#     return u['id'], u.get('username'), u.get('name'), u.get('lastname'), u.get('bday'), u.get('avatar'), u.get('bio')
+
+def db_get_user_info_by_id(user_id: int):
     u = User.query.get(user_id)
     if not u:
         return None
@@ -49,7 +41,7 @@ def get_user_info_by_id(user_id: int):
         'bio': u.bio
     }
 
-def get_user_id_by_username(username: str):
+def db_get_user_id_by_username(username: str):
     u = User.query.filter_by(username=username).first()
     if not u:
         return None
@@ -57,7 +49,7 @@ def get_user_id_by_username(username: str):
         "id": u.id
     }
 
-def create_user(login: str, name: str, lastname: str, bday,
+def db_create_user(login: str, name: str, lastname: str, bday,
                 password_text: str, avatar: str = None, bio: str = None):
     if not all([login, name, lastname, bday, password_text]):
         return None
@@ -76,24 +68,25 @@ def create_user(login: str, name: str, lastname: str, bday,
     db.session.commit()
     return user.id
 
-def check_login(login: str):
-    u = get_user_by_login(login)
+def db_check_login(login: str):
+    u = db_get_user_by_login(login)
+    print('u:', u)
     return u.id if u else None
 
-def check_username(username: str):
+def db_check_username(username: str):
     u = User.query.filter_by(username=username).first()
     return u.id if u else None
 
-def get_password(login: str):
+def db_get_password(login: str):
     u = User.query.filter_by(login=login).first()
     if not u or not u.passwords:
         return None
     return u.passwords[0].password
 
-def edit_profile(login: str, avatar: str, name: str,
+def db_edit_profile(login: str, avatar: str, name: str,
                  lastname: str, username: str,
                  bday, bio: str):
-    u = get_user_by_login(login)
+    u = db_get_user_by_login(login)
     if not u:
         return False
     u.avatar   = avatar
@@ -105,8 +98,8 @@ def edit_profile(login: str, avatar: str, name: str,
     db.session.commit()
     return True
 
-def delete_user(login: str):
-    u = get_user_by_login(login)
+def db_delete_user(login: str):
+    u = db_get_user_by_login(login)
     if not u:
         return False
     Password.query.filter_by(user_id=u.id).delete()
@@ -114,7 +107,7 @@ def delete_user(login: str):
     db.session.commit()
     return True
 
-def create_chat(creator_id: int, chat_name: str, type_id: int,
+def db_create_chat(creator_id: int, chat_name: str, type_id: int,
                 role_id: int, chat_state_id: int):
     chat = Chat(
         creator_id=creator_id,
@@ -133,7 +126,7 @@ def create_chat(creator_id: int, chat_name: str, type_id: int,
     db.session.commit()
     return chat.id
 
-def add_avatar_chat(chat_id: int, avatar: str):
+def db_add_avatar_chat(chat_id: int, avatar: str):
     chat = Chat.query.get(chat_id)
     if not chat:
         return False
@@ -141,7 +134,7 @@ def add_avatar_chat(chat_id: int, avatar: str):
     db.session.commit()
     return True
 
-def add_token_chat(chat_id: int, token: str):
+def db_add_token_chat(chat_id: int, token: str):
     chat = Chat.query.get(chat_id)
     if not chat:
         return False
@@ -149,10 +142,10 @@ def add_token_chat(chat_id: int, token: str):
     db.session.commit()
     return True
 
-def get_chat_by_token(token: str):
+def db_get_chat_by_token(token: str):
     return Chat.query.filter_by(token=token).first()
 
-def get_chat_inf(target: str, chat_id: int):
+def db_get_chat_inf(target: str, chat_id: int):
     c = Chat.query.get(chat_id)
     if not c:
         return None
@@ -182,12 +175,12 @@ def db_leave_chat(chat_id: int, user_id: int):
     db.session.commit()
     return True
 
-def delete_chat(chat_id: int):
+def db_delete_chat(chat_id: int):
     Chat.query.filter_by(id=chat_id).delete()
     db.session.commit()
     return True
 
-def save_message(message: str, type_id: int, timestamp: datetime,
+def db_save_message(message: str, type_id: int, timestamp: datetime,
                  member_id: int, chat_id: int,
                  state_id: int, content_state_id: int):
     entry = MessageEntry(
@@ -203,7 +196,7 @@ def save_message(message: str, type_id: int, timestamp: datetime,
     db.session.commit()
     return entry.id
 
-def edit_message(msg_id: int, msg_txt: str):
+def db_edit_message(msg_id: int, msg_txt: str):
     entry = MessageEntry.query.filter_by(id=msg_id).first()
     if not entry:
         return False
@@ -212,21 +205,21 @@ def edit_message(msg_id: int, msg_txt: str):
     db.session.commit()
     return True
 
-def forward_message(msg_id, orig_sender:str):
+def db_forward_message(msg_id, orig_sender:str):
     entry = MessageEntry.query.filter_by(id=msg_id).first()
     if not entry:
         return False
     entry.orig_sender = orig_sender
     db.session.commit()
 
-def reply_message(msg_id, reply_id:int):
+def db_reply_message(msg_id, reply_id:int):
     entry = MessageEntry.query.filter_by(id=msg_id).first()
     if not entry:
         return False
     entry.reply_id = reply_id
     db.session.commit()
 
-def delete_message(msg_id: int):
+def db_delete_message(msg_id: int):
     entry = MessageEntry.query.filter_by(id=msg_id).first()
     if not entry:
         return False
@@ -235,7 +228,7 @@ def delete_message(msg_id: int):
     db.session.commit()
     return True
 
-def get_base_messages(chat_id: int):
+def db_get_base_messages(chat_id: int):
     rows = db.session.query(
         MessageEntry, Member, User, Chat
     ).join(Member, MessageEntry.member_id == Member.id
@@ -267,7 +260,7 @@ def get_base_messages(chat_id: int):
     # print('result: ', result)
     return result
 
-def get_chat_list(user_id: int):    
+def db_get_chat_list(user_id: int):    
     last_msg_subq = db.session.query(
         MessageEntry.chat_id,
         MessageEntry.member_id,
@@ -342,7 +335,7 @@ def get_chat_list(user_id: int):
 
 #     return [row._asdict() for row in q.all()]
 
-def get_chat_list_empty(user_id: int):
+def db_get_chat_list_empty(user_id: int):
     non_deleted_count = func.sum(
         case(
             (MessageEntry.deleted_status != 2, 1),
@@ -373,22 +366,22 @@ def get_chat_list_empty(user_id: int):
     return [row._asdict() for row in q.all()]
  
 
-def get_chat_state_id(chat_id: int, user_id: int):
+def db_get_chat_state_id(chat_id: int, user_id: int):
     m = Member.query.filter_by(chat_id=chat_id, user_id=user_id).first()
     return m.chat_state_id if m else None
 
-def get_role_id(chat_id: int, user_id: int):
+def db_get_role_id(chat_id: int, user_id: int):
     m = Member.query.filter_by(chat_id=chat_id, user_id=user_id).first()
     return m.role_id if m else None
 
-def get_last_msg(chat_id: int):
+def db_get_last_msg(chat_id: int):
     m = MessageEntry.query.filter_by(chat_id=chat_id).order_by(MessageEntry.timestamp.desc()).first()
     return {'message': m.message, 'timestamp': m.timestamp} if m else None
 
-def get_cnt_members(chat_id: int):
+def db_get_cnt_members(chat_id: int):
     return Member.query.filter_by(chat_id=chat_id).count()
 
-def get_members(chat_id: int):
+def db_get_members(chat_id: int):
     rows = db.session.query(
         User.id, User.name, User.lastname, User.username, User.avatar
     ).join(Member, Member.user_id == User.id
@@ -427,19 +420,19 @@ def db_clear_chat(chat_id: int):
     db.session.commit()
     return True
 
-def get_chat_id_by_names(name1: str, name2: str):
+def db_get_chat_id_by_names(name1: str, name2: str):
     c = Chat.query.filter(or_(Chat.chat_name == name1, Chat.chat_name == name2)).first()
     return c.id if c else None
  
-def get_member_id(chat_id: int, user_id: int):
+def db_get_member_id(chat_id: int, user_id: int):
     m = Member.query.filter_by(chat_id = chat_id, user_id = user_id).first()
     return m.id if m else None
 
-def get_avatar_group(id: int):
+def db_get_avatar_group(id: int):
     c = Chat.query.filter_by(id = id).first()
     return c.avatar if c else None
 
-def check_chat_name(name1: str, name2: str):
+def db_check_chat_name(name1: str, name2: str):
     c = Chat.query.filter_by(chat_name = name1).first()
     id = c.id if c else None
     if id: 
@@ -448,21 +441,21 @@ def check_chat_name(name1: str, name2: str):
         c = Chat.query.filter_by(chat_name = name2).first()
         return c.id if c else None
     
-def check_group_joined(chat_id: int, user_id: int):
-    m = Member.query.filter_by(chat_id = chat_id, user_id = user_id).first
+def db_check_group_joined(chat_id: int, user_id: int):
+    m = Member.query.filter_by(chat_id = chat_id, user_id = user_id).first()
     return m.id if m else None
 
-def check_code(token: int):
+def db_check_code(token: int):
     if token:
         c = Chat.query.filter_by(token = token).first()
         return c.id if c else None
     else: return None
 
-def get_name_friend(id: int):
+def db_get_name_friend(id: int):
     u = User.query.filter_by(id=id).first()
     return u.name, u.lastname if u else None
 
-def add_members(chat_id: int, user_id: int):
+def db_add_members(chat_id: int, user_id: int):
     role_id = 3
     m = Member(
         chat_id = chat_id,
@@ -472,10 +465,10 @@ def add_members(chat_id: int, user_id: int):
     db.session.commit()
     return m.id
 
-def get_chat_id(token: int):
+def db_get_chat_id(token: int):
     c = Chat.query.filter_by(token = token).first()
     return c.id if c else None
 
-def get_avatar_friend(id: int):
+def db_get_avatar_friend(id: int):
     u = User.query.filter_by(id=id).first()
     return u.avatar if u else None

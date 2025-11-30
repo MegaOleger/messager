@@ -3,7 +3,7 @@
 document.addEventListener('contextmenu', event => event.preventDefault())
 
 // websocket
-const socket = io({ transports: ['websocket'], alwaysConnect: true });
+const socket = io({ transports: ['websocket']});
 document.getElementById('btn_send').addEventListener('click', () => {
     console.log('btn_send')
     const message = document.getElementById('resizeTextarea').value;
